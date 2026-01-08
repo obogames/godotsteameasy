@@ -1,0 +1,158 @@
+[gd_scene load_steps=12 format=3 uid="uid://buh1cpr4fgl5r"]
+
+[ext_resource type="Script" uid="uid://0ohmd23qvo8q" path="res://addons/godotsteameasy/sync/ping.gd" id="1_kwsik"]
+[ext_resource type="Texture2D" uid="uid://s2la1x85j424" path="res://addons/godotsteameasy/gizmo/steam.png" id="1_l21jt"]
+[ext_resource type="Script" uid="uid://b44xck84dk4e5" path="res://addons/godotsteameasy/sync/signal_sync.gd" id="1_p2ulm"]
+[ext_resource type="Script" uid="uid://cnumi4rsqeuiy" path="res://example-project/menu/lobby_menu.gd" id="2_kwsik"]
+[ext_resource type="Script" uid="uid://cqjamys1dprrp" path="res://addons/godotsteameasy/sync/state_sync.gd" id="2_r5a4j"]
+[ext_resource type="Script" uid="uid://cnxdsfqtkk2mk" path="res://addons/godotsteameasy/sync/physics_attributes/physics_node_transform.gd" id="3_20k3x"]
+[ext_resource type="Script" uid="uid://2b3gpgdi1jp4" path="res://example-project/menu/lobby_info.gd" id="3_p2ulm"]
+[ext_resource type="Script" uid="uid://cvf7vm68todlx" path="res://addons/godotsteameasy/sync/physics_attributes/physics_attribute_custom.gd" id="3_ua2n8"]
+[ext_resource type="Script" uid="uid://dd4n15rhsqrjt" path="res://addons/godotsteameasy/ui/steam_avatars.gd" id="4_811sh"]
+
+[sub_resource type="Resource" id="Resource_4nb1n"]
+script = ExtResource("3_20k3x")
+metadata/_custom_type_script = "uid://cnxdsfqtkk2mk"
+
+[sub_resource type="Resource" id="Resource_20k3x"]
+script = ExtResource("3_ua2n8")
+attribute_name = "position"
+metadata/_custom_type_script = "uid://cvf7vm68todlx"
+
+[node name="Steamtest" type="Node3D"]
+
+[node name="Signals" type="Node" parent="." groups=["net_syncer"]]
+script = ExtResource("1_p2ulm")
+verbose = true
+
+[node name="StateSyncerSimple" type="Timer" parent="."]
+wait_time = 0.1
+autostart = true
+script = ExtResource("2_r5a4j")
+sync_node_type = SubResource("Resource_4nb1n")
+sync_attributes = Array[ExtResource("3_ua2n8")]([SubResource("Resource_20k3x")])
+metadata/_custom_type_script = "uid://cqjamys1dprrp"
+
+[node name="Ping" type="Timer" parent="." groups=["net_signal"]]
+wait_time = 2.0
+script = ExtResource("1_kwsik")
+
+[node name="MPLobby" type="Panel" parent="."]
+offset_right = 433.0
+offset_bottom = 375.0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="steamlogo" type="TextureRect" parent="MPLobby"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+texture = ExtResource("1_l21jt")
+expand_mode = 2
+
+[node name="lobby_menu" type="HBoxContainer" parent="MPLobby"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -61.500008
+offset_top = -108.0
+offset_right = 61.500008
+offset_bottom = 108.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_kwsik")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MPLobby/lobby_menu"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+metadata/_edit_group_ = true
+
+[node name="CreateBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Create Lobby"
+
+[node name="JoinBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Join Friend"
+
+[node name="SingleBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Singleplayer"
+
+[node name="SettingsBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Settings"
+
+[node name="ExitBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Exit"
+
+[node name="lobby_info" type="HBoxContainer" parent="MPLobby" node_paths=PackedStringArray("avatar_loader")]
+visible = false
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 60.0
+offset_bottom = 108.0
+grow_horizontal = 2
+script = ExtResource("3_p2ulm")
+avatar_loader = NodePath("HBoxContainer/PlayersList")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MPLobby/lobby_info"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MPLobby/lobby_info/HBoxContainer"]
+layout_mode = 2
+
+[node name="LobbyName" type="Label" parent="MPLobby/lobby_info/HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "Loading Lobby"
+
+[node name="StartBtn" type="Button" parent="MPLobby/lobby_info/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Start Game"
+
+[node name="InviteBtn" type="Button" parent="MPLobby/lobby_info/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Invite"
+
+[node name="LeaveBtn" type="Button" parent="MPLobby/lobby_info/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Leave"
+
+[node name="PlayersList" type="VBoxContainer" parent="MPLobby/lobby_info/HBoxContainer"]
+custom_minimum_size = Vector2(250, 48)
+layout_mode = 2
+script = ExtResource("4_811sh")
+
+[connection signal="net_ping" from="Ping" to="MPLobby/lobby_info/HBoxContainer/PlayersList" method="_on_ping"]
+[connection signal="net_pong" from="Ping" to="MPLobby/lobby_info/HBoxContainer/PlayersList" method="_on_pong"]
+[connection signal="pressed" from="MPLobby/lobby_menu/VBoxContainer/CreateBtn" to="MPLobby/lobby_menu" method="_on_create_presesd"]
+[connection signal="pressed" from="MPLobby/lobby_menu/VBoxContainer/JoinBtn" to="MPLobby/lobby_menu" method="_on_join_btn_pressed"]
+[connection signal="pressed" from="MPLobby/lobby_menu/VBoxContainer/SingleBtn" to="MPLobby/lobby_info/HBoxContainer/PlayersList" method="inv_friend_hud"]
+[connection signal="pressed" from="MPLobby/lobby_menu/VBoxContainer/SettingsBtn" to="MPLobby/lobby_menu" method="_on_settings_pressed"]
+[connection signal="pressed" from="MPLobby/lobby_menu/VBoxContainer/ExitBtn" to="MPLobby/lobby_menu" method="_on_exit"]
+[connection signal="pressed" from="MPLobby/lobby_info/HBoxContainer/VBoxContainer/StartBtn" to="MPLobby/lobby_info" method="_on_start_pressed"]
+[connection signal="pressed" from="MPLobby/lobby_info/HBoxContainer/VBoxContainer/InviteBtn" to="MPLobby/lobby_info" method="_on_invite_btn_pressed"]
+[connection signal="pressed" from="MPLobby/lobby_info/HBoxContainer/VBoxContainer/LeaveBtn" to="MPLobby/lobby_info" method="_on_leave_pressed"]

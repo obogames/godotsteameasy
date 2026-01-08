@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://bl7jx61w581fw"]
+
+[ext_resource type="Script" uid="uid://dydeteugii6ry" path="res://example-project/scene_mgr.gd" id="1_fag1v"]
+[ext_resource type="Script" uid="uid://dm5cbu6y2wd8w" path="res://example-project/globals.gd" id="1_xu5pr"]
+[ext_resource type="Script" uid="uid://c66oq2o4wn6k8" path="res://addons/godotsteameasy/net_base.gd" id="2_fag1v"]
+[ext_resource type="Script" uid="uid://cqp0x5s2et2v7" path="res://addons/godotsteameasy/backends/steam/steam_backend.gd" id="6_m2coo"]
+[ext_resource type="Script" uid="uid://vranmesd5fel" path="res://addons/godotsteameasy/backends/steam/steam_lobby_manager.gd" id="7_txeux"]
+
+[node name="Global" type="Node" unique_id=1652743537]
+process_mode = 4
+physics_interpolation_mode = 2
+auto_translate_mode = 2
+script = ExtResource("1_xu5pr")
+
+[node name="SceneManager" type="Node" parent="." unique_id=167471765]
+script = ExtResource("1_fag1v")
+
+[node name="Net" type="Node" parent="." unique_id=1005935698 groups=["net_core"]]
+process_mode = 4
+physics_interpolation_mode = 2
+auto_translate_mode = 2
+script = ExtResource("2_fag1v")
+
+[node name="SteamBackend" type="Node" parent="Net" unique_id=1475883095]
+process_mode = 3
+script = ExtResource("6_m2coo")
+
+[node name="Steam" type="Node" parent="Net" unique_id=863636299]
+script = ExtResource("7_txeux")
+quit_without_steam = false

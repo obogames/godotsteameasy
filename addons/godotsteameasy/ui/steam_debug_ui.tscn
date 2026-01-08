@@ -1,0 +1,272 @@
+[gd_scene load_steps=8 format=3 uid="uid://cygjvunfgy117"]
+
+[ext_resource type="Script" uid="uid://cnwmii3lbw8vy" path="res://addons/godotsteameasy/ui/steam_debug_ui.gd" id="1_463b4"]
+[ext_resource type="Script" uid="uid://vranmesd5fel" path="res://addons/godotsteameasy/backends/steam/steam_lobby_manager.gd" id="3_2e5q7"]
+[ext_resource type="Script" uid="uid://cqp0x5s2et2v7" path="res://addons/godotsteameasy/backends/steam/steam_backend.gd" id="3_037so"]
+[ext_resource type="Script" uid="uid://c66oq2o4wn6k8" path="res://addons/godotsteameasy/net_base.gd" id="5_bv6vh"]
+[ext_resource type="PackedScene" path="res://_junk/debug/circle_movement.tscn" id="6_j3wwl"]
+[ext_resource type="Script" uid="uid://dfyyx8c7r7cvm" path="res://_junk/_junk_spawner.gd" id="6_xe5uf"]
+[ext_resource type="Texture2D" uid="uid://s2la1x85j424" path="res://addons/godotsteameasy/gizmo/steam.png" id="7_pfsq6"]
+
+[node name="SteamDebugUi" type="Control" node_paths=PackedStringArray("steam", "net")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_463b4")
+steam = NodePath("NetBase/Steam")
+net = NodePath("NetBase")
+handle_p2p = true
+
+[node name="NetBase" type="Node" parent="."]
+process_mode = 4
+physics_interpolation_mode = 2
+auto_translate_mode = 2
+script = ExtResource("5_bv6vh")
+
+[node name="SteamBackend" type="Node" parent="NetBase"]
+process_mode = 4
+physics_interpolation_mode = 2
+auto_translate_mode = 2
+script = ExtResource("3_037so")
+metadata/_custom_type_script = "uid://cqp0x5s2et2v7"
+
+[node name="Steam" type="Node" parent="NetBase"]
+process_mode = 3
+physics_interpolation_mode = 2
+auto_translate_mode = 2
+script = ExtResource("3_2e5q7")
+
+[node name="Players" type="Node2D" parent="." node_paths=PackedStringArray("net")]
+script = ExtResource("6_xe5uf")
+net = NodePath("../NetBase")
+player_prefab = ExtResource("6_j3wwl")
+send_p2p = false
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="steamlogo" type="TextureRect" parent="VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+texture = ExtResource("7_pfsq6")
+expand_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+text = "Steam Admin"
+
+[node name="RefreshBtn" type="Button" parent="VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Refresh"
+
+[node name="appid" type="LineEdit" parent="VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(70, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+placeholder_text = "App ID"
+editable = false
+
+[node name="username" type="LineEdit" parent="VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(90, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+placeholder_text = "username"
+editable = false
+
+[node name="AchiBtn" type="Button" parent="VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Achievements"
+
+[node name="StoreBtn" type="Button" parent="VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Store"
+
+[node name="SteamHomeBtn" type="Button" parent="VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Steam Home"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="List1Container" type="VBoxContainer" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label1" type="Label" parent="VBoxContainer/HBoxContainer/List1Container"]
+layout_mode = 2
+text = "Matches"
+horizontal_alignment = 1
+
+[node name="games_list" type="ItemList" parent="VBoxContainer/HBoxContainer/List1Container"]
+custom_minimum_size = Vector2(200, 300)
+layout_mode = 2
+
+[node name="join" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/List1Container"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="JoinFriend" type="Button" parent="VBoxContainer/HBoxContainer/List1Container/join"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Join a Match"
+
+[node name="Invite" type="Button" parent="VBoxContainer/HBoxContainer/List1Container/join"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Invite Friend"
+
+[node name="CreateBtn" type="Button" parent="VBoxContainer/HBoxContainer/List1Container/join"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Create Match"
+
+[node name="List2Container" type="VBoxContainer" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer/List2Container"]
+layout_mode = 2
+text = "Match Players"
+horizontal_alignment = 1
+
+[node name="players_list" type="ItemList" parent="VBoxContainer/HBoxContainer/List2Container"]
+custom_minimum_size = Vector2(200, 300)
+layout_mode = 2
+
+[node name="List3Container" type="VBoxContainer" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 4.0
+
+[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer/List3Container"]
+layout_mode = 2
+text = "Game Logs"
+horizontal_alignment = 1
+
+[node name="logs_list" type="ItemList" parent="VBoxContainer/HBoxContainer/List3Container"]
+custom_minimum_size = Vector2(200, 300)
+layout_mode = 2
+
+[node name="chat" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/List3Container"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="chat_message" type="LineEdit" parent="VBoxContainer/HBoxContainer/List3Container/chat"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+placeholder_text = "chat message"
+keep_editing_on_text_submit = true
+
+[node name="SendBtn" type="Button" parent="VBoxContainer/HBoxContainer/List3Container/chat"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Send"
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer3"]
+layout_mode = 2
+text = "MATCH--> owner:"
+
+[node name="owner_username" type="LineEdit" parent="VBoxContainer/HBoxContainer3"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+placeholder_text = "Match host"
+editable = false
+
+[node name="CheckBox" type="CheckBox" parent="VBoxContainer/HBoxContainer3"]
+layout_mode = 2
+
+[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer3"]
+layout_mode = 2
+text = "Joinable"
+
+[node name="game_mode" type="LineEdit" parent="VBoxContainer/HBoxContainer3"]
+custom_minimum_size = Vector2(200, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+placeholder_text = "Game mode"
+
+[node name="SetGameMode" type="Button" parent="VBoxContainer/HBoxContainer3"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Set Mode"
+
+[node name="StartGame" type="Button" parent="VBoxContainer/HBoxContainer3"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+text = "START!"
+
+[node name="HBoxContainer4" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="pingbtn" type="Button" parent="VBoxContainer/HBoxContainer4"]
+layout_mode = 2
+text = "Send ping"
+
+[node name="ping" type="LineEdit" parent="VBoxContainer/HBoxContainer4"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+placeholder_text = "ping"
+editable = false
+
+[node name="getstate" type="Button" parent="VBoxContainer/HBoxContainer4"]
+layout_mode = 2
+text = "get p2p state"
+
+[node name="establish_p2p" type="Button" parent="VBoxContainer/HBoxContainer4"]
+layout_mode = 2
+text = "Establish P2P"
+
+[node name="p2pstate" type="LineEdit" parent="VBoxContainer/HBoxContainer4"]
+custom_minimum_size = Vector2(300, 40)
+layout_mode = 2
+size_flags_horizontal = 0
+placeholder_text = "p2p state"
+editable = false
+
+[connection signal="lobby_event" from="NetBase/Steam" to="Players" method="_on_steam_lobby_event"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer2/RefreshBtn" to="." method="_on_refresh_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer2/AchiBtn" to="." method="_on_achi_btn_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer2/StoreBtn" to="." method="_on_store_btn_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer2/SteamHomeBtn" to="." method="_on_steam_home_btn_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/List1Container/join/JoinFriend" to="." method="_on_join_friend_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/List1Container/join/Invite" to="." method="_on_invite_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/List1Container/join/CreateBtn" to="." method="_on_create_match_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer/List3Container/chat/SendBtn" to="." method="_on_send_chat_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer3/SetGameMode" to="." method="_on_set_game_mode_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer3/StartGame" to="." method="_on_start_game_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer4/pingbtn" to="." method="_on_pingbtn_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer4/getstate" to="." method="_on_getstate_pressed"]
+[connection signal="pressed" from="VBoxContainer/HBoxContainer4/establish_p2p" to="." method="_on_establish_p2p_pressed"]

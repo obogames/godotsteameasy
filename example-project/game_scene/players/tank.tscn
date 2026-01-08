@@ -1,0 +1,58 @@
+[gd_scene format=3 uid="uid://deg2rjh7a3k4w"]
+
+[ext_resource type="Script" uid="uid://cys3dqrrjr4kv" path="res://example-project/game_scene/players/tank.gd" id="1_tank"]
+[ext_resource type="Material" uid="uid://blo0akm2dsjbk" path="res://example-project/game_scene/players/tank_body_mat.tres" id="2_gvw4o"]
+[ext_resource type="Material" uid="uid://duc0ncg4peadi" path="res://example-project/game_scene/players/billboard_mat.tres" id="2_ippr0"]
+[ext_resource type="Material" uid="uid://d3dhg74x5vvhe" path="res://example-project/game_scene/players/tank_turret_mat.tres" id="3_6ltfc"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_body"]
+size = Vector3(2, 1, 3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_turret"]
+size = Vector3(1.2, 0.8, 1.2)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_barrel"]
+top_radius = 0.1
+bottom_radius = 0.1
+height = 1.6
+
+[sub_resource type="AudioStreamGenerator" id="AudioStreamGenerator_3xd4c"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_3xd4c"]
+
+[node name="Tank" type="Node3D" unique_id=923757741]
+script = ExtResource("1_tank")
+
+[node name="Body" type="MeshInstance3D" parent="." unique_id=1080024257]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 0.7, 0, 1, 0, -4.371139e-08, 0.6494709, 0.35, -0.002008438)
+mesh = SubResource("BoxMesh_body")
+surface_material_override/0 = ExtResource("2_gvw4o")
+
+[node name="Turret" type="MeshInstance3D" parent="." unique_id=575197616]
+transform = Transform3D(-3.4969112e-08, 0, -0.8, 0, 0.8, 0, 0.8, 0, -3.4969112e-08, 0.007966638, 1, -0.002008438)
+mesh = SubResource("BoxMesh_turret")
+surface_material_override/0 = ExtResource("3_6ltfc")
+
+[node name="Barrel" type="MeshInstance3D" parent="Turret" unique_id=2046470665]
+transform = Transform3D(1.5, 0, 0, 0, -6.556708e-08, -1.5, 0, 1.5, -6.556708e-08, -4.235328e-08, 0, -1.7689302)
+mesh = SubResource("CylinderMesh_barrel")
+surface_material_override/0 = ExtResource("3_6ltfc")
+
+[node name="RayCast3D" type="RayCast3D" parent="Turret/Barrel" unique_id=282014151]
+transform = Transform3D(1, 0, 4.2351647e-22, 0, 1, -8.351873e-23, 4.2351647e-22, -8.3518724e-23, 1, 0, 0, 0)
+target_position = Vector3(0, 0, -100)
+
+[node name="voice" type="AudioStreamPlayer3D" parent="." unique_id=986685468 groups=["net_voice"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9801764, 0)
+stream = SubResource("AudioStreamGenerator_3xd4c")
+
+[node name="voice_icon" type="MeshInstance3D" parent="." unique_id=2125576713]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 2.363934, 0)
+mesh = SubResource("QuadMesh_3xd4c")
+surface_material_override/0 = ExtResource("2_ippr0")
+
+[node name="username" type="Label3D" parent="." unique_id=1742470947]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.990591, 0)
+billboard = 1
+no_depth_test = true
+text = "username"

@@ -1,0 +1,13 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://duc0ncg4peadi"]
+
+[ext_resource type="Texture2D" uid="uid://dmx0ke61rynq4" path="res://example-project/game_scene/players/voice_speaking.png" id="1_6dyyq"]
+
+[resource]
+transparency = 2
+alpha_scissor_threshold = 0.5
+alpha_antialiasing_mode = 0
+blend_mode = 3
+no_depth_test = true
+albedo_texture = ExtResource("1_6dyyq")
+billboard_mode = 1
+billboard_keep_scale = true

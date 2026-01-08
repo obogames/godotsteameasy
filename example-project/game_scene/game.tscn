@@ -1,0 +1,102 @@
+[gd_scene format=3 uid="uid://c8crmywi7wt5p"]
+
+[ext_resource type="PackedScene" uid="uid://deg2rjh7a3k4w" path="res://example-project/game_scene/players/tank.tscn" id="1_tank"]
+[ext_resource type="Script" uid="uid://b44xck84dk4e5" path="res://addons/godotsteameasy/sync/signal_sync.gd" id="2_hpb1s"]
+[ext_resource type="Script" uid="uid://btra5hxln4u8x" path="res://addons/godotsteameasy/sync/voice_sync.gd" id="3_0je3w"]
+[ext_resource type="Script" uid="uid://cqjamys1dprrp" path="res://addons/godotsteameasy/sync/state_sync.gd" id="4_xqq06"]
+[ext_resource type="Script" uid="uid://cnxdsfqtkk2mk" path="res://addons/godotsteameasy/sync/physics_attributes/physics_node_transform.gd" id="5_mtxxn"]
+[ext_resource type="Script" uid="uid://ch0sreb450nj8" path="res://addons/godotsteameasy/autostart.gd" id="6_om3kt"]
+[ext_resource type="Script" uid="uid://0ohmd23qvo8q" path="res://addons/godotsteameasy/sync/ping.gd" id="7_dh22y"]
+[ext_resource type="Script" uid="uid://3w6nrec33d1a" path="res://addons/godotsteameasy/sync/player_spawner.gd" id="8_4nr88"]
+[ext_resource type="Script" uid="uid://c1bambkgxr4il" path="res://example-project/game_scene/rotate.gd" id="9_0je3w"]
+
+[sub_resource type="AudioStreamGenerator" id="AudioStreamGenerator_ate2l"]
+
+[sub_resource type="Resource" id="Resource_7eeko"]
+script = ExtResource("5_mtxxn")
+metadata/_custom_type_script = "uid://cnxdsfqtkk2mk"
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
+size = Vector2(1, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0wyp5"]
+albedo_color = Color(0.7291871, 0.98445576, 0.4714644, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(1, 0.1, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_oohvo"]
+albedo_color = Color(0.10747976, 0.10747973, 0.10747973, 1)
+
+[sub_resource type="TextMesh" id="TextMesh_xqq06"]
+material = SubResource("StandardMaterial3D_oohvo")
+text = "(0,0,0)"
+
+[sub_resource type="BoxMesh" id="BoxMesh_ojq4g"]
+
+[node name="Game" type="Node3D" unique_id=1554303070]
+
+[node name="Signals" type="Node" parent="." unique_id=1490627372 groups=["net_syncer"]]
+process_mode = 4
+physics_interpolation_mode = 2
+script = ExtResource("2_hpb1s")
+verbose = true
+
+[node name="Voice" type="Node" parent="." unique_id=681361774 groups=["net_syncer"]]
+process_mode = 3
+physics_interpolation_mode = 2
+auto_translate_mode = 2
+script = ExtResource("3_0je3w")
+
+[node name="Loopback" type="AudioStreamPlayer3D" parent="Voice" unique_id=1692232651]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.46180427, 0)
+stream = SubResource("AudioStreamGenerator_ate2l")
+
+[node name="StateSyncerSimple" type="Node" parent="." unique_id=1441387060 groups=["net_syncer"]]
+process_mode = 3
+physics_interpolation_mode = 2
+auto_translate_mode = 2
+script = ExtResource("4_xqq06")
+sync_node_type = SubResource("Resource_7eeko")
+
+[node name="AutoSetup" type="Node" parent="." unique_id=1892277573]
+script = ExtResource("6_om3kt")
+game_start_scene = ""
+lobby_host = "oboforty"
+
+[node name="Ping" type="Timer" parent="." unique_id=62599804 groups=["net_signal"]]
+wait_time = 5.0
+script = ExtResource("7_dh22y")
+share_with_others = false
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1587214311]
+transform = Transform3D(0.8660253, -0.4330129, 0.2500001, 0, 0.49999994, 0.86602545, -0.50000024, -0.74999994, 0.43301257, 0, 10, 0)
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1774888826]
+transform = Transform3D(-3.0637175e-08, 0.7132627, -0.70089686, 3.1177695e-08, 0.70089686, 0.7132627, 1, 3.5527137e-15, -4.371139e-08, -11.813057, 6.9824553, 0)
+fov = 60.0
+
+[node name="Ground" type="StaticBody3D" parent="." unique_id=282817934]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=343494730]
+transform = Transform3D(20, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0)
+mesh = SubResource("PlaneMesh_ground")
+surface_material_override/0 = SubResource("StandardMaterial3D_0wyp5")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=753631887]
+transform = Transform3D(20, 0, 0, 0, 1, 0, 0, 0, 20, 0, 0, 0)
+shape = SubResource("BoxShape3D_ground")
+
+[node name="zero coordinate" type="MeshInstance3D" parent="Ground" unique_id=2136773768]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.09112316, 0)
+mesh = SubResource("TextMesh_xqq06")
+script = ExtResource("9_0je3w")
+speed = 3.0
+
+[node name="Players" type="Node3D" parent="." unique_id=1150389011]
+script = ExtResource("8_4nr88")
+player_prefab = ExtResource("1_tank")
+
+[node name="A Box" type="MeshInstance3D" parent="." unique_id=537394215]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.924973, 0.9884033, 0)
+mesh = SubResource("BoxMesh_ojq4g")
