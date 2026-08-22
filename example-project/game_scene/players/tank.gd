@@ -47,7 +47,7 @@ func _ready():
 	#    In this demo game, my player lacks a Camera, a username label and voice input, 
 	#    otherwise they're equivalent nodes
 	if my_player:
-		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		#Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 		# Set as speaker for Voice Sync
 		# TODO: make it an easier call?

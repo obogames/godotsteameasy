@@ -32,7 +32,6 @@ var _syncables: Dictionary[String, Array] = {}
 # union of sync_node_types & sync_attributes
 var _attributes: Array[PhysicsAttribute] = []
 
-
 # network packet -- TODO: move this to a file?
 class SlidingBuffer:
 	var max_size: int = 5
@@ -66,6 +65,26 @@ class PacketSyncDescriptor:
 	# This is the latest packet, whose value was applied to the node's property
 	# also guarantees that packets are not applied twice
 	var applied_packet_idx: int = 0
+
+
+	# TODO: ITT: THESE SHOULD BE PER ATTRIBUTE for each synced node!
+	# Last value sent across the network
+	var last_sent_value = null
+
+	# Last time of receiving
+	var recv_time = 0
+
+	# This is the average of state snapshot intervals, but by default is set at 200ms
+	var lerp_time = 0.2
+	const MAX_LERP_TIME = 0.5
+	var snapshot_intervals = SlidingBuffer.new(10)
+
+
+	func snapshot_received():
+		var now = Time.get_ticks_msec()
+		if recv_time > 0:
+			lerp_time = minf(MAX_LERP_TIME, now - recv_time)
+		recv_time = now
 
 
 func _ready() -> void:
@@ -110,15 +129,15 @@ func _physics_process(delta: float) -> void:
 	#		cause that's like hacking
 
 	for node_path in _syncables:
-		var sync: PacketSyncDescriptor = _syncables[node_path][1]
+		var synced: PacketSyncDescriptor = _syncables[node_path][1]
 		var jitter_buffer: SlidingBuffer = _syncables[node_path][2]
 		# get latest value of jitter buffer:
 		var target_state = jitter_buffer.latest
 
-		if not target_state or sync.applied_packet_idx >= target_state["id"]:
+		if not target_state or synced.applied_packet_idx >= target_state["id"]:
 			# only apply messages that are newer than the most recently applied packet!
 			continue
-		sync.applied_packet_idx = target_state["id"]
+		synced.applied_packet_idx = target_state["id"]
 
 		var node: Node = _syncables[node_path][0]
 
@@ -130,15 +149,19 @@ func _physics_process(delta: float) -> void:
 			match attr.apply_value_type:
 				PhysicsAttribute.ApplyValueType.SNAP:
 					# e.g.: node.linear_velocity = target_linear_velocity
-					node.set(attr.attribute_name, target_state.get(attr.attribute_name))
+					node.set(attr.attribute_name,
+						target_state.get(attr.attribute_name)
+					)
 				PhysicsAttribute.ApplyValueType.DAMP:
 					# e.g.: node.position = lerp(node.position, target_position, 0.1)
 					node.set(attr.attribute_name, 
 						lerp(node.get(attr.attribute_name), target_state.get(attr.attribute_name), attr.damp_value)
 					)
 				PhysicsAttribute.ApplyValueType.INTERPOLATE_LINEAR:
-					# TODO: implement interpolation
-					push_error("Unimplemented interpolation!")
+					# e.g.: node.position = lerp(node.position, target_position, 0.1)
+					node.set(attr.attribute_name, 
+						lerp(node.get(attr.attribute_name), target_state.get(attr.attribute_name), attr.damp_value)
+					)
 				PhysicsAttribute.ApplyValueType.INTERPOLATE_ANGLE:
 					# TODO: implement interpolation
 					push_error("Unimplemented interpolation!")
@@ -156,29 +179,41 @@ func _on_tick():
 			# only send state info for player's owned objects!
 			continue
 
-		var sync: PacketSyncDescriptor = _syncables[node_path][1]
+		var synced: PacketSyncDescriptor = _syncables[node_path][1]
 
-		sync.sent_packet_idx += 1
+		synced.sent_packet_idx += 1
 
 		# only include attributes whose value did change
 		if serialization == StateSerialization.JSON_FORMAT:
-			var data = {"id": sync.sent_packet_idx, "cm": node_path}
+			var data = {"id": synced.sent_packet_idx, "cm": node_path}
 	
 			var changing_attributes = 0
 			for attr in _attributes:
 				var value = node.get(attr.attribute_name)
 
 				# TODO: because of this logic, unreliable packet is only sent once. this is not gud
-				if attr.last_sent_value == null or attr.last_sent_value != value:
-					attr.last_sent_value = value
+				if wtf.last_sent_value == null or wtf.last_sent_value != value:
+					wtf.last_sent_value = value
 					data[attr.attribute_name] = _to_repr(value)
 					changing_attributes += 1
 
 			if changing_attributes > 0:
 				net.broadcast_to_peers(INet.NWC_STATE_SYNC, data, {"reliable": false})
 		elif serialization == StateSerialization.BINARY_FORMAT:
-			# TODO: itt
-			pass
+			var data = {"id": synced.sent_packet_idx, "cm": node_path}
+	
+			var changing_attributes = 0
+			for attr in _attributes:
+				var value = node.get(attr.attribute_name)
+
+				# TODO: because of this logic, unreliable packet is only sent once. this is not gud
+				if wtf.last_sent_value == null or wtf.last_sent_value != value:
+					wtf.last_sent_value = value
+					data[attr.attribute_name] = value
+					changing_attributes += 1
+
+			if changing_attributes > 0:
+				net.broadcast_to_peers(INet.NWC_STATE_SYNC, data, {"reliable": false, "format": INet.PacketFormat.FORMAT_BINARY})
 		else:
 			push_error("Not implemented State Serialization format!")
 
@@ -203,12 +238,15 @@ func _on_data_received(from, data):
 		return
 	var node_path = _node_path(node)
 
-	var sync: PacketSyncDescriptor = _syncables[node_path][1]
+	var synced: PacketSyncDescriptor = _syncables[node_path][1]
 	var jitter_buffer: SlidingBuffer = _syncables[node_path][2]
 
 	if serialization == StateSerialization.JSON_FORMAT:
 		for attr in data:
 			data[attr] = _to_native(data[attr], typeof(node.get(attr)))
+	elif serialization == StateSerialization.BINARY_FORMAT:
+		for attr in data:
+			data[attr] = data[attr]
 	else:
 		push_error("Not implemented State Deserialization format!")
 

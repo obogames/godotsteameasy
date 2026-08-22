@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://0ohmd23qvo8q" path="res://addons/godotsteameasy/sync/ping.gd" id="7_dh22y"]
 [ext_resource type="Script" uid="uid://3w6nrec33d1a" path="res://addons/godotsteameasy/sync/player_spawner.gd" id="8_4nr88"]
 [ext_resource type="Script" uid="uid://c1bambkgxr4il" path="res://example-project/game_scene/rotate.gd" id="9_0je3w"]
+[ext_resource type="PackedScene" uid="uid://ccencq0lcd3ph" path="res://example-project/chat/multiplayer_chat_ui.tscn" id="10_0je3w"]
 
 [sub_resource type="AudioStreamGenerator" id="AudioStreamGenerator_ate2l"]
 
@@ -100,3 +101,18 @@ player_prefab = ExtResource("1_tank")
 [node name="A Box" type="MeshInstance3D" parent="." unique_id=537394215]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.924973, 0.9884033, 0)
 mesh = SubResource("BoxMesh_ojq4g")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=478713877]
+
+[node name="MultiplayerChatUI" parent="CanvasLayer" unique_id=1567560952 instance=ExtResource("10_0je3w")]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -384.0
+offset_top = -434.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 0
+grow_vertical = 0
