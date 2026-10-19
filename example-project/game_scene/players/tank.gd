@@ -48,14 +48,14 @@ func _ready():
 	#    otherwise they're equivalent nodes
 	if my_player:
 		#Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-
 		# Set as speaker for Voice Sync
-		# TODO: make it an easier call?
-		# TODO: $ITT: 
-		var voice_sync = Globals.net._syncers[INet.NWC_VOIP_P][0]
-		voice_sync.my_speaker = voice_sync._node_path($voice)
-		print("[Player] %s set voice authority" % self.name)
-		$voice.queue_free()
+		# TODO: handle multiple syncers? they shouldn't exist, no?
+		var syncers = Globals.net._syncers[INet.NWC_VOIP_P]
+		if len(syncers) > 0:
+			var voice_sync = syncers[0]
+			voice_sync.my_speaker = voice_sync._node_path($voice)
+			print("[Player] %s set voice authority" % self.name)
+			$voice.queue_free()
 
 	# uncomment, if it's an first-person camera game
 	#if my_player:

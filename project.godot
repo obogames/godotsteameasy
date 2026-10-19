@@ -15,7 +15,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="ExampleProject"
-config/features=PackedStringArray("4.6", "Forward Plus")
+config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
 
 [audio]
@@ -78,10 +78,3 @@ space={
 
 3d_render/layer_5="MyOwnPlayer"
 3d_physics/layer_3="arm collision"
-
-[steam]
-
-initialization/app_id=0
-initialization/initialize_on_startup=false
-initialization/embed_callbacks=false
-multiplayer_peer/max_channels=4

@@ -192,8 +192,8 @@ func _on_tick():
 				var value = node.get(attr.attribute_name)
 
 				# TODO: because of this logic, unreliable packet is only sent once. this is not gud
-				if wtf.last_sent_value == null or wtf.last_sent_value != value:
-					wtf.last_sent_value = value
+				if synced.last_sent_value == null or synced.last_sent_value != value:
+					synced.last_sent_value = value
 					data[attr.attribute_name] = _to_repr(value)
 					changing_attributes += 1
 
@@ -207,8 +207,8 @@ func _on_tick():
 				var value = node.get(attr.attribute_name)
 
 				# TODO: because of this logic, unreliable packet is only sent once. this is not gud
-				if wtf.last_sent_value == null or wtf.last_sent_value != value:
-					wtf.last_sent_value = value
+				if synced.last_sent_value == null or synced.last_sent_value != value:
+					synced.last_sent_value = value
 					data[attr.attribute_name] = value
 					changing_attributes += 1
 

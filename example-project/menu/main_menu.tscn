@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://buh1cpr4fgl5r"]
+[gd_scene format=3 uid="uid://buh1cpr4fgl5r"]
 
 [ext_resource type="Script" uid="uid://0ohmd23qvo8q" path="res://addons/godotsteameasy/sync/ping.gd" id="1_kwsik"]
 [ext_resource type="Texture2D" uid="uid://s2la1x85j424" path="res://addons/godotsteameasy/gizmo/steam.png" id="1_l21jt"]
@@ -19,13 +19,13 @@ script = ExtResource("3_ua2n8")
 attribute_name = "position"
 metadata/_custom_type_script = "uid://cvf7vm68todlx"
 
-[node name="Steamtest" type="Node3D"]
+[node name="Steamtest" type="Node3D" unique_id=848286559]
 
-[node name="Signals" type="Node" parent="." groups=["net_syncer"]]
+[node name="Signals" type="Node" parent="." unique_id=1806672495 groups=["net_syncer"]]
 script = ExtResource("1_p2ulm")
 verbose = true
 
-[node name="StateSyncerSimple" type="Timer" parent="."]
+[node name="StateSyncerSimple" type="Timer" parent="." unique_id=2074540141]
 wait_time = 0.1
 autostart = true
 script = ExtResource("2_r5a4j")
@@ -33,24 +33,24 @@ sync_node_type = SubResource("Resource_4nb1n")
 sync_attributes = Array[ExtResource("3_ua2n8")]([SubResource("Resource_20k3x")])
 metadata/_custom_type_script = "uid://cqjamys1dprrp"
 
-[node name="Ping" type="Timer" parent="." groups=["net_signal"]]
+[node name="Ping" type="Timer" parent="." unique_id=1611583568 groups=["net_signal"]]
 wait_time = 2.0
 script = ExtResource("1_kwsik")
 
-[node name="MPLobby" type="Panel" parent="."]
+[node name="MPLobby" type="Panel" parent="." unique_id=1568524788]
 offset_right = 433.0
 offset_bottom = 375.0
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="steamlogo" type="TextureRect" parent="MPLobby"]
+[node name="steamlogo" type="TextureRect" parent="MPLobby" unique_id=1888304944]
 layout_mode = 0
 offset_right = 40.0
 offset_bottom = 40.0
 texture = ExtResource("1_l21jt")
 expand_mode = 2
 
-[node name="lobby_menu" type="HBoxContainer" parent="MPLobby"]
+[node name="lobby_menu" type="HBoxContainer" parent="MPLobby" unique_id=912657325]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -65,44 +65,44 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_kwsik")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MPLobby/lobby_menu"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MPLobby/lobby_menu" unique_id=279409512]
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 metadata/_edit_group_ = true
 
-[node name="CreateBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer"]
+[node name="CreateBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer" unique_id=1259688935]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
 size_flags_horizontal = 0
 text = "Create Lobby"
 
-[node name="JoinBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer"]
+[node name="JoinBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer" unique_id=1760677042]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
 size_flags_horizontal = 0
 text = "Join Friend"
 
-[node name="SingleBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer"]
+[node name="SingleBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer" unique_id=202143177]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
 size_flags_horizontal = 0
 text = "Singleplayer"
 
-[node name="SettingsBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer"]
+[node name="SettingsBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer" unique_id=1645530926]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
 size_flags_horizontal = 0
 text = "Settings"
 
-[node name="ExitBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer"]
+[node name="ExitBtn" type="Button" parent="MPLobby/lobby_menu/VBoxContainer" unique_id=1451773478]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
 size_flags_horizontal = 0
 text = "Exit"
 
-[node name="lobby_info" type="HBoxContainer" parent="MPLobby" node_paths=PackedStringArray("avatar_loader")]
+[node name="lobby_info" type="HBoxContainer" parent="MPLobby" unique_id=1678085857 node_paths=PackedStringArray("avatar_loader")]
 visible = false
 layout_mode = 1
 anchors_preset = 10
@@ -111,37 +111,38 @@ offset_top = 60.0
 offset_bottom = 108.0
 grow_horizontal = 2
 script = ExtResource("3_p2ulm")
+game_start_scene = "res://example-project/game_scene/game.tscn"
 avatar_loader = NodePath("HBoxContainer/PlayersList")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MPLobby/lobby_info"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MPLobby/lobby_info" unique_id=961506596]
 layout_mode = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MPLobby/lobby_info/HBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MPLobby/lobby_info/HBoxContainer" unique_id=1274035133]
 layout_mode = 2
 
-[node name="LobbyName" type="Label" parent="MPLobby/lobby_info/HBoxContainer/VBoxContainer"]
+[node name="LobbyName" type="Label" parent="MPLobby/lobby_info/HBoxContainer/VBoxContainer" unique_id=193406789]
 layout_mode = 2
 text = "Loading Lobby"
 
-[node name="StartBtn" type="Button" parent="MPLobby/lobby_info/HBoxContainer/VBoxContainer"]
+[node name="StartBtn" type="Button" parent="MPLobby/lobby_info/HBoxContainer/VBoxContainer" unique_id=2108943296]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
 size_flags_horizontal = 0
 text = "Start Game"
 
-[node name="InviteBtn" type="Button" parent="MPLobby/lobby_info/HBoxContainer/VBoxContainer"]
+[node name="InviteBtn" type="Button" parent="MPLobby/lobby_info/HBoxContainer/VBoxContainer" unique_id=1064164145]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
 size_flags_horizontal = 0
 text = "Invite"
 
-[node name="LeaveBtn" type="Button" parent="MPLobby/lobby_info/HBoxContainer/VBoxContainer"]
+[node name="LeaveBtn" type="Button" parent="MPLobby/lobby_info/HBoxContainer/VBoxContainer" unique_id=1906305799]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
 size_flags_horizontal = 0
 text = "Leave"
 
-[node name="PlayersList" type="VBoxContainer" parent="MPLobby/lobby_info/HBoxContainer"]
+[node name="PlayersList" type="VBoxContainer" parent="MPLobby/lobby_info/HBoxContainer" unique_id=1546761193]
 custom_minimum_size = Vector2(250, 48)
 layout_mode = 2
 script = ExtResource("4_811sh")
