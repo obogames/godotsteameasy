@@ -78,14 +78,10 @@ enum PacketTransmit {
 class AuthInfo:
 	var uid: Variant
 	var username: String
-	var token: String
-	var token_type: String
-
 	var logged_in: bool = false
 
-	# game data
-	var iso: String
-	var civ: String
+	## Round-trip time to the lobby owner in ms (-1 = unknown). Maintained by PingNwNode
+	var ping: int = -1
 
 
 class LobbyInfo:

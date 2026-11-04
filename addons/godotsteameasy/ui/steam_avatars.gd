@@ -12,6 +12,45 @@ func _ready() -> void:
 		players_list = self
 
 	Steam.avatar_loaded.connect(_loaded_Avatar)
+	net.lobby_event.connect(_on_lobby_event)
+
+	# Lobby may have been joined in a previous scene (e.g. menu -> game scene)
+	if net.lobby_info != null:
+		reload_all()
+
+
+func _on_lobby_event(type: int, user: INet.AuthInfo, info: Dictionary):
+	if user == null:
+		return
+
+	if type == INet.EVENT_JOIN:
+		if user.uid == net.me.uid:
+			# I joined: list everyone already in the lobby
+			reload_all()
+		else:
+			reload_pfp(user.uid)
+	elif type == INet.EVENT_LEAVE:
+		if user.uid == net.me.uid:
+			clear()
+		else:
+			remove_user(user.uid)
+
+
+func _on_ping_event(_event: Variant):
+	# PingNwNode connects its own handlers on lobby join, i.e. after this (scene) connection,
+	# so defer until it has stored the new value in INet
+	_copy_pings.call_deferred()
+
+
+func _copy_pings():
+	# copy pings stored in INet (LobbyInfo members' AuthInfo) into the UI
+	if net.lobby_info == null:
+		return
+	for user in players_list.get_children():
+		var member: INet.AuthInfo = net.lobby_info.members.get(user.uid)
+		if member != null:
+			user.set_ping(member.ping)
+
 
 func clear():
 	for user in players_list.get_children():
@@ -20,27 +59,19 @@ func clear():
 	await get_tree().process_frame
 
 
-func _on_pong(event: Variant):
-	# hook this into the Ping node's signal
-	if event.has("rtts"):
-		for user in players_list.get_children():
-			var rtt: int = event["rtts"].get(str(user.uid), -1)
-			if rtt and rtt != -1:
-				user.set_ping(rtt)
+func reload_all():
+	for uid in net.lobby_info.members.keys():
+		reload_pfp(uid)
 
 
-func _on_ping(event: Variant):
-	if not event.has("_frm") or not event.get("rtt"):
-		if net.is_server:
-			# client always receives its own ping
-			print("[Avatars] initial ping recv ", event)
-		return
-
-	var node = players_list.get_node(str(event["_frm"]))
-	node.set_ping(event["rtt"])
+func remove_user(uid: int):
+	if players_list.has_node(str(uid)):
+		players_list.get_node(str(uid)).queue_free()
 
 
 func reload_pfp(uid: int):
+	if net.lobby_info == null or not net.lobby_info.members.has(uid):
+		return
 	var member: INet.AuthInfo = net.lobby_info.members[uid]
 
 	var player: Node
@@ -51,6 +82,7 @@ func reload_pfp(uid: int):
 		player.set_data(member)
 		players_list.add_child(player)
 
+	player.set_ping(member.ping)
 	player.reload_pfp()
 
 func _loaded_Avatar(uid: int, this_size: int, buffer: PackedByteArray):

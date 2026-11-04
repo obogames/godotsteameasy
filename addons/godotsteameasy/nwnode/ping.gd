@@ -17,15 +17,40 @@ signal net_pong(event)
 var _cli_packets_sent: Dictionary[int, int] = {}
 var _cli_latest_pacid: int = 0
 
-# Server - pings of all players
-# Client - my ping
-var _rtt_values: Dictionary = {}
-
-var my_ping: Variant:
+## My own RTT to the server (-1 = unknown). Stored on the AuthInfo
+var my_ping: int:
 	get:
-		return _rtt_values.get(str(net.me.uid))
+		return net.me.ping
 	set(value):
-		_rtt_values[str(net.me.uid)] = value
+		_set_ping(net.me.uid, value)
+
+
+func get_ping(uid: int) -> int:
+	if net.lobby_info == null or not net.lobby_info.members.has(uid):
+		return -1
+	return net.lobby_info.members[uid].ping
+
+
+func _set_ping(uid: int, rtt: int):
+	# net.me and lobby_info.members[me] can be different AuthInfo objects: keep both in sync
+	if uid == net.me.uid:
+		net.me.ping = rtt
+
+	if net.lobby_info == null or not net.lobby_info.members.has(uid):
+		return
+	var member: INet.AuthInfo = net.lobby_info.members[uid]
+	if member.ping == rtt:
+		return
+	member.ping = rtt
+
+
+func _collect_pings() -> Dictionary:
+	# wire format: {"<uid>": rtt}, string keys survive JSON serialization
+	var rtts := {}
+	for member in net.lobby_info.members.values():
+		if member.ping >= 0:
+			rtts[str(member.uid)] = member.ping
+	return rtts
 
 func _ready() -> void:
 	if not is_stopped():
@@ -35,16 +60,30 @@ func _ready() -> void:
 		return
 	net.lobby_event.connect(_on_lobby_event)
 
+	# Lobby may have been joined in a previous scene (e.g. menu -> game scene)
+	if net.lobby_info != null:
+		_start_pinging()
+
 func _on_lobby_event(type: int, user: INet.AuthInfo, info: Dictionary):
-	if type == INet.EVENT_JOIN and user.uid == net.me.uid:
-		if ping_type == PingType.CLIENT_TO_SERVER:
-			if net.is_server:
-				net_ping.connect(_on_ping)
-			else:
-				# Client - start sending pings & server RTT reply
-				timeout.connect(_on_tick)
-				net_pong.connect(_on_pong)
-				start()
+	if type == INet.EVENT_JOIN and user != null and user.uid == net.me.uid:
+		_start_pinging()
+
+
+var _started := false
+func _start_pinging():
+	if _started or ping_type != PingType.CLIENT_TO_SERVER:
+		return
+	_started = true
+
+	if net.is_server:
+		# server has no RTT to itself, but display it as 0 ms for everyone
+		_set_ping(net.me.uid, 0)
+		net_ping.connect(_on_ping)
+	else:
+		# Client - start sending pings & server RTT reply
+		timeout.connect(_on_tick)
+		net_pong.connect(_on_pong)
+		start()
 
 
 #if net.is_server == (ping_type == PingType.SERVER_TO_CLIENT):
@@ -56,8 +95,12 @@ func _on_tick():
 		_cli_latest_pacid = 0
 	_cli_packets_sent[_cli_latest_pacid] = now
 
-	# client sends previous ping to server
-	var ping = {"type": "ping", "pacid": _cli_latest_pacid, "rtt": my_ping}
+	# client sends previous ping to server (null if not measured yet)
+	# _to: SignalNwNode only transmits events that have a recipient
+	var ping = {
+		"type": "ping", "pacid": _cli_latest_pacid, "rtt": my_ping if my_ping >= 0 else null,
+		"_to": "server_only",
+	}
 	net_ping.emit(ping)
 
 
@@ -66,16 +109,18 @@ func _on_ping(ping):
 	var packetid = ping["pacid"]
 	var now = Time.get_ticks_msec()
 
-	# cache list of pings 
-	var client_uid = ping["_frm"]
+	# save the client's reported RTT on its AuthInfo
+	if not ping.has("_frm"):
+		return
+	var client_uid := int(ping["_frm"])
 	var rtt = ping.get("rtt")
-	if rtt:
-		_rtt_values[str(client_uid)] = rtt
+	if rtt != null:
+		_set_ping(client_uid, int(rtt))
 
-	# send PONG back to client, also send other clients' RTTs
-	var pong = {"type": "pong", "pacid": packetid, "halftime": now}
+	# send PONG back to the pinging client only (pacids are per-client), also send other clients' RTTs
+	var pong = {"type": "pong", "pacid": packetid, "halftime": now, "_to": client_uid}
 	if share_with_others:
-		pong["rtts"] = _rtt_values.duplicate()
+		pong["rtts"] = _collect_pings()
 
 	net_pong.emit(pong)
 
@@ -88,12 +133,15 @@ func _on_pong(pong):
 		return
 
 	var rtt: int = int(Time.get_ticks_msec() - _cli_packets_sent[packetid])
-	if pong.get("rtts"):
-		# cache RTT of other clients
-		# TODO - this is unused, as other nodes listen to the event instead
-		_rtt_values = pong["rtts"]
-	else:
-		# only save my RTT
-		my_ping = rtt
-
 	_cli_packets_sent.erase(packetid)
+
+	# save other clients' RTTs shared by the server
+	var rtts = pong.get("rtts")
+	if rtts:
+		for uid_str in rtts:
+			var uid := int(uid_str)
+			if uid != net.me.uid:
+				_set_ping(uid, int(rtts[uid_str]))
+
+	# always save my own freshly measured RTT
+	my_ping = rtt

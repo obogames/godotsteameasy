@@ -28,11 +28,11 @@ var move_direction: Vector3 = Vector3.ZERO
 var turn_input: float = 0.0
 
 
-var net_info: INet.AuthInfo:
-	get:
-		if !has_meta("steam_id"):
-			return null
-		return Globals.net.lobby_info.members.get(get_meta("steam_id"))
+#var net_info: INet.AuthInfo:
+	#get:
+		#if !has_meta("steam_id"):
+			#return null
+		#return Globals.net.lobby_info.members.get(get_meta("steam_id"))
 
 
 func _ready():
@@ -88,8 +88,9 @@ func set_data(info: INet.AuthInfo):
 	my_player = (info.uid == Globals.net.me.uid)
 
 	# Set node name
-	var uidstr = str(net_info.uid)
-	name = "%s#%s" % [net_info.username, uidstr.substr(len(uidstr)-4)]
+	var uidstr = str(info.uid)
+	name = "%s#%s" % [info.username, uidstr.substr(len(uidstr)-4)]
+	$username.text = info.username
 
 func toggle_voice(is_on: bool):
 	$voice_icon.visible = is_on

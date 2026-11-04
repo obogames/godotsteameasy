@@ -147,8 +147,8 @@ custom_minimum_size = Vector2(250, 48)
 layout_mode = 2
 script = ExtResource("4_811sh")
 
-[connection signal="net_ping" from="Ping" to="MPLobby/lobby_info/HBoxContainer/PlayersList" method="_on_ping"]
-[connection signal="net_pong" from="Ping" to="MPLobby/lobby_info/HBoxContainer/PlayersList" method="_on_pong"]
+[connection signal="net_ping" from="Ping" to="MPLobby/lobby_info/HBoxContainer/PlayersList" method="_on_ping_event"]
+[connection signal="net_pong" from="Ping" to="MPLobby/lobby_info/HBoxContainer/PlayersList" method="_on_ping_event"]
 [connection signal="pressed" from="MPLobby/lobby_menu/VBoxContainer/CreateBtn" to="MPLobby/lobby_menu" method="_on_create_presesd"]
 [connection signal="pressed" from="MPLobby/lobby_menu/VBoxContainer/JoinBtn" to="MPLobby/lobby_menu" method="_on_join_btn_pressed"]
 [connection signal="pressed" from="MPLobby/lobby_menu/VBoxContainer/SingleBtn" to="MPLobby/lobby_info/HBoxContainer/PlayersList" method="inv_friend_hud"]

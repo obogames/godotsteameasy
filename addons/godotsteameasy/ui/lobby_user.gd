@@ -22,7 +22,8 @@ func reload_pfp():
 
 func set_ping(rtt: int):
 	var ping_label = $MarginContainer/HBoxContainer/PingLbl
-	ping_label.text = "%d ms" % rtt
+	# -1 = not measured yet (before the first pong); 0 is valid (the host)
+	ping_label.text = "%d ms" % rtt if rtt >= 0 else ""
 
 
 func open_hud():
