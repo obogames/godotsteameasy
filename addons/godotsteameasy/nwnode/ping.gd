@@ -1,5 +1,5 @@
 @icon("res://addons/godotsteameasy/gizmo/ping.png")
-extends Timer
+class_name PingNwNode extends Timer
 
 @export var enabled: bool = true
 

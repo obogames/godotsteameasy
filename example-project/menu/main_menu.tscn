@@ -1,13 +1,13 @@
 [gd_scene format=3 uid="uid://buh1cpr4fgl5r"]
 
-[ext_resource type="Script" uid="uid://0ohmd23qvo8q" path="res://addons/godotsteameasy/sync/ping.gd" id="1_kwsik"]
+[ext_resource type="Script" uid="uid://0ohmd23qvo8q" path="res://addons/godotsteameasy/nwnode/ping.gd" id="1_kwsik"]
 [ext_resource type="Texture2D" uid="uid://s2la1x85j424" path="res://addons/godotsteameasy/gizmo/steam.png" id="1_l21jt"]
-[ext_resource type="Script" uid="uid://b44xck84dk4e5" path="res://addons/godotsteameasy/sync/signal_sync.gd" id="1_p2ulm"]
+[ext_resource type="Script" uid="uid://b44xck84dk4e5" path="res://addons/godotsteameasy/nwnode/signal_sync.gd" id="1_p2ulm"]
 [ext_resource type="Script" uid="uid://cnumi4rsqeuiy" path="res://example-project/menu/lobby_menu.gd" id="2_kwsik"]
-[ext_resource type="Script" uid="uid://cqjamys1dprrp" path="res://addons/godotsteameasy/sync/state_sync.gd" id="2_r5a4j"]
-[ext_resource type="Script" uid="uid://cnxdsfqtkk2mk" path="res://addons/godotsteameasy/sync/physics_attributes/physics_node_transform.gd" id="3_20k3x"]
+[ext_resource type="Script" uid="uid://cqjamys1dprrp" path="res://addons/godotsteameasy/nwnode/state_sync.gd" id="2_r5a4j"]
+[ext_resource type="Script" uid="uid://cnxdsfqtkk2mk" path="res://addons/godotsteameasy/nwnode/physics_attributes/physics_node_transform.gd" id="3_20k3x"]
 [ext_resource type="Script" uid="uid://2b3gpgdi1jp4" path="res://example-project/menu/lobby_info.gd" id="3_p2ulm"]
-[ext_resource type="Script" uid="uid://cvf7vm68todlx" path="res://addons/godotsteameasy/sync/physics_attributes/physics_attribute_custom.gd" id="3_ua2n8"]
+[ext_resource type="Script" uid="uid://cvf7vm68todlx" path="res://addons/godotsteameasy/nwnode/physics_attributes/physics_attribute_custom.gd" id="3_ua2n8"]
 [ext_resource type="Script" uid="uid://dd4n15rhsqrjt" path="res://addons/godotsteameasy/ui/steam_avatars.gd" id="4_811sh"]
 
 [sub_resource type="Resource" id="Resource_4nb1n"]

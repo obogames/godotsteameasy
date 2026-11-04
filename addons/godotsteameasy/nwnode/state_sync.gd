@@ -1,5 +1,5 @@
 @icon("res://addons/godotsteameasy/gizmo/sync.png")
-class_name StateSyncerSimple extends Node
+class_name StateSyncNwNodeerNwNode extends Node
 
 @export_group("Component Group")
 @export var enabled: bool = true
@@ -221,7 +221,7 @@ func _on_tick():
 
 
 # net_core calls this
-# TODO: bug -- "cm" identifies the node, not the StateSyncer Node!!
+# TODO: bug -- "cm" identifies the node, not the StateSyncNwNodeer Node!!
 # 		so we can only have one syncer node per scene, which is wrong
 #		TODO: identify SyncerNode by unique ID, so that net_core can call _recv_packet for the right syncer!
 func _on_data_received(from, data):
@@ -229,7 +229,7 @@ func _on_data_received(from, data):
 	if net.is_server:
 		var opts = {"except": from, "reliable": false, "format": INet.PacketFormat.FORMAT_JSON}
 		if !net.broadcast(INet.NWC_VOIP_P, data, opts):
-			push_error("[StateSync] propagate from recv failed (uid: %d) %s" % [from, data])
+			push_error("[StateSyncNwNode] propagate from recv failed (uid: %d) %s" % [from, data])
 			print("###@ DON'T DISS IT LIKE MY PEOPLE WANNA")
 
 	var scene = get_tree().current_scene
@@ -259,7 +259,7 @@ func register_component(node: Node):
 		return
 
 	var path = _node_path(node)
-	print("[StateSync] registered %s node: %s" % [type_string(typeof(node)), path])
+	print("[StateSyncNwNode] registered %s node: %s" % [type_string(typeof(node)), path])
 
 	var sliding_buffer_max_size = int(server_fps / 12.0)
 	_syncables[path] = [node, PacketSyncDescriptor.new(), SlidingBuffer.new(sliding_buffer_max_size)]

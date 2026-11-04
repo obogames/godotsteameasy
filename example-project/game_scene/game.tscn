@@ -1,15 +1,17 @@
 [gd_scene format=3 uid="uid://c8crmywi7wt5p"]
 
 [ext_resource type="PackedScene" uid="uid://deg2rjh7a3k4w" path="res://example-project/game_scene/players/tank.tscn" id="1_tank"]
-[ext_resource type="Script" uid="uid://b44xck84dk4e5" path="res://addons/godotsteameasy/sync/signal_sync.gd" id="2_hpb1s"]
-[ext_resource type="Script" uid="uid://btra5hxln4u8x" path="res://addons/godotsteameasy/sync/voice_sync.gd" id="3_0je3w"]
-[ext_resource type="Script" uid="uid://cqjamys1dprrp" path="res://addons/godotsteameasy/sync/state_sync.gd" id="4_xqq06"]
-[ext_resource type="Script" uid="uid://cnxdsfqtkk2mk" path="res://addons/godotsteameasy/sync/physics_attributes/physics_node_transform.gd" id="5_mtxxn"]
+[ext_resource type="Script" uid="uid://b44xck84dk4e5" path="res://addons/godotsteameasy/nwnode/signal_sync.gd" id="2_hpb1s"]
+[ext_resource type="Script" uid="uid://btra5hxln4u8x" path="res://addons/godotsteameasy/nwnode/voice_sync.gd" id="3_0je3w"]
+[ext_resource type="Script" uid="uid://cqjamys1dprrp" path="res://addons/godotsteameasy/nwnode/state_sync.gd" id="4_xqq06"]
+[ext_resource type="Script" uid="uid://cnxdsfqtkk2mk" path="res://addons/godotsteameasy/nwnode/physics_attributes/physics_node_transform.gd" id="5_mtxxn"]
 [ext_resource type="Script" uid="uid://ch0sreb450nj8" path="res://addons/godotsteameasy/autostart.gd" id="6_om3kt"]
-[ext_resource type="Script" uid="uid://0ohmd23qvo8q" path="res://addons/godotsteameasy/sync/ping.gd" id="7_dh22y"]
-[ext_resource type="Script" uid="uid://3w6nrec33d1a" path="res://addons/godotsteameasy/sync/player_spawner.gd" id="8_4nr88"]
+[ext_resource type="Script" uid="uid://0ohmd23qvo8q" path="res://addons/godotsteameasy/nwnode/ping.gd" id="7_dh22y"]
+[ext_resource type="Script" uid="uid://3w6nrec33d1a" path="res://addons/godotsteameasy/nwnode/player_spawner.gd" id="8_4nr88"]
 [ext_resource type="Script" uid="uid://c1bambkgxr4il" path="res://example-project/game_scene/rotate.gd" id="9_0je3w"]
 [ext_resource type="PackedScene" uid="uid://ccencq0lcd3ph" path="res://example-project/chat/multiplayer_chat_ui.tscn" id="10_0je3w"]
+[ext_resource type="Script" uid="uid://bpuii10q7ussc" path="res://example-project/game_scene/stats.gd" id="11_xqq06"]
+[ext_resource type="Script" uid="uid://dd4n15rhsqrjt" path="res://addons/godotsteameasy/ui/steam_avatars.gd" id="12_mtxxn"]
 
 [sub_resource type="AudioStreamGenerator" id="AudioStreamGenerator_ate2l"]
 
@@ -116,3 +118,15 @@ offset_right = 0.0
 offset_bottom = 0.0
 grow_horizontal = 0
 grow_vertical = 0
+
+[node name="NetworkStats" type="Label" parent="CanvasLayer" unique_id=1428917041 node_paths=PackedStringArray("ping_component")]
+offset_right = 198.0
+offset_bottom = 58.0
+script = ExtResource("11_xqq06")
+ping_component = NodePath("../../Ping")
+
+[node name="PlayersList" type="VBoxContainer" parent="." unique_id=708112920]
+custom_minimum_size = Vector2(250, 48)
+offset_right = 329.0
+offset_bottom = 326.0
+script = ExtResource("12_mtxxn")

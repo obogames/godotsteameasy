@@ -250,11 +250,11 @@ func register_syncer(syncer: Node):
 	if !syncer.is_in_group("net_syncer"):
 		return
 
-	if syncer is SignalSyncer:
+	if syncer is SignalNwNode:
 		_syncers[NWC_SIGNAL_P].append(syncer)
-	elif syncer is StateSyncerSimple:
+	elif syncer is StateSyncNwNodeerNwNode:
 		_syncers[NWC_STATE_SYNC].append(syncer)
-	elif syncer is VoiceSyncer:
+	elif syncer is VoiceNwNode:
 		_syncers[NWC_VOIP_P].append(syncer)
 
 func register_syncers():

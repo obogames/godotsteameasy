@@ -1,5 +1,5 @@
 @icon("res://addons/godotsteameasy/gizmo/voice.png")
-class_name VoiceSyncer extends Node
+class_name VoiceNwNode extends Node
 
 ## If set to true, it'll monitor net_component nodes being added and removed to the scene
 @export_group("Component Group")
@@ -60,7 +60,7 @@ func _ready() -> void:
 	else:
 		# Debug voice through looping the voice back to the speaker
 		if not has_node("Loopback"):
-			push_error("[VoiceSync] loopback voice was enabled, but VoiceSync node `%s` lacks a `LocalVoice` child!")
+			push_error("[VoiceNwNode] loopback voice was enabled, but VoiceNwNode node `%s` lacks a `LocalVoice` child!")
 
 		$Loopback.stream.mix_rate = sample_rate
 		$Loopback.play()
@@ -81,7 +81,7 @@ func _process(dt):
 	if voice_data['result'] == Steam.VOICE_RESULT_OK and voice_data['written']:
 		var audio_node = _node_cache[str(my_speaker)]
 		if my_speaker == null:
-			print("[VoiceSync] Voice message has data: %s / %s, but Syncer found no node with multiplayer authority! Set the `steam_id` meta for an AudioStreamPlayer node which belongs to a player object!" % [voice_data['result'], voice_data['written']])
+			print("[VoiceNwNode] Voice message has data: %s / %s, but Syncer found no node with multiplayer authority! Set the `steam_id` meta for an AudioStreamPlayer node which belongs to a player object!" % [voice_data['result'], voice_data['written']])
 			return
 
 		# If loopback is enable, play it back at this point
@@ -164,18 +164,18 @@ func register_voice_node(audio_node: Node):
 	if !audio_node.is_in_group(voice_component_group):
 		return
 	elif not (audio_node is AudioStreamPlayer3D or audio_node is AudioStreamPlayer2D or audio_node is AudioStreamPlayer):
-		push_error("[VoiceSync] audio_node of group: `%s` must be of either type: AudioStreamPlayer/3D/2D!" % voice_component_group)
+		push_error("[VoiceNwNode] audio_node of group: `%s` must be of either type: AudioStreamPlayer/3D/2D!" % voice_component_group)
 		return
 	# setup playback
 	audio_node.stream.mix_rate = sample_rate
 	audio_node.play()
 
 	var _path = _node_path(audio_node)
-	print("[VoiceSync] registered %s node: %s (pitch: %s, sample rate: %s)" % [audio_node.get_class(), _path, audio_node.pitch_scale, sample_rate])
+	print("[VoiceNwNode] registered %s node: %s (pitch: %s, sample rate: %s)" % [audio_node.get_class(), _path, audio_node.pitch_scale, sample_rate])
 
 	if is_net_authority(audio_node):
 		# Player speaking into the mike is going to be played back for other clients on this node
-		print("[VoiceSync] registered multiplayer authority (steam id: %s) %s." % [audio_node.get_meta("steam_id"), _path])
+		print("[VoiceNwNode] registered multiplayer authority (steam id: %s) %s." % [audio_node.get_meta("steam_id"), _path])
 		my_speaker = _path
 
 	_node_cache[_path] = {

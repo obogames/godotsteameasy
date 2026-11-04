@@ -1,5 +1,5 @@
 @icon("res://addons/godotsteameasy/gizmo/spawner.png")
-extends Node3D
+class_name SpawnerNwNode extends Node3D
 
 ## Default player scene to instantiate. Its script must have a `set_data` function, with an INet.AuthInfo parameter
 @export var player_prefab: PackedScene
@@ -9,25 +9,36 @@ extends Node3D
 
 
 @onready var net: INet = get_tree().get_first_node_in_group("net_core")
-var inited = false
+
+## Spawned player nodes, keyed by Steam uid
+var players: Dictionary = {}
 
 
 func _ready() -> void:
 	if not visible:
 		return
 
-	if Globals.net.me != null and Globals.net.lobby_info != null:
-		# _on_lobby_event was already called from a different scene
+	# Always listen, so players joining/leaving later are spawned/despawned too
+	net.lobby_event.connect(_on_lobby_event)
+
+	if net.lobby_info != null:
+		# Lobby was already joined in a previous scene (e.g. lobby menu -> game scene)
 		spawn_players()
-	else:
-		net.lobby_event.connect(_on_lobby_event)
 
 
 func _on_lobby_event(type: int, user: INet.AuthInfo, info: Dictionary):
-	if not inited and user.uid == Globals.net.me.uid and type == INet.EVENT_JOIN:
-		# TODO: ITT: net is not ready yet, how can we handle this
-		spawn_players()
-		inited = true
+	if user == null:
+		return
+
+	if type == INet.EVENT_JOIN:
+		if user.uid == net.me.uid:
+			# I joined: spawn everyone already in the lobby (incl. me)
+			spawn_players()
+		else:
+			# Someone else joined after me
+			spawn_player(user.uid)
+	elif type == INet.EVENT_LEAVE:
+		despawn_player(user.uid)
 
 
 func spawn_players():
@@ -36,6 +47,9 @@ func spawn_players():
 
 
 func spawn_player(uid: int):
+	if players.has(uid) or not net.lobby_info.members.has(uid):
+		return
+
 	var member = net.lobby_info.members[uid]
 	var player: Node
 
@@ -45,4 +59,12 @@ func spawn_player(uid: int):
 		player = player_prefab.instantiate()
 
 	player.set_data(member)
+	players[uid] = player
 	add_child(player)
+
+
+func despawn_player(uid: int):
+	var player: Node = players.get(uid)
+	players.erase(uid)
+	if is_instance_valid(player):
+		player.queue_free()

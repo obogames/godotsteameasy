@@ -1,5 +1,5 @@
 @icon("res://addons/godotsteameasy/gizmo/sync.png")
-class_name SignalSyncer extends Node
+class_name SignalNwNode extends Node
 
 @export_group("Component Group")
 @export var enabled: bool = true
