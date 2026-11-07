@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://example-project/game_scene/ui/score_row.gd" id="1_row"]
+[ext_resource type="PackedScene" path="res://example-project/game_scene/ui/streak_icon.tscn" id="2_icon"]
+
+[node name="ScoreRow" type="VBoxContainer"]
+theme_override_constants/separation = 2
+script = ExtResource("1_row")
+streak_icon_prefab = ExtResource("2_icon")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+text = "username  0 / 0"
+
+[node name="StreakIcons" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 2

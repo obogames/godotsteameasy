@@ -14,6 +14,17 @@ class_name SpawnerNwNode extends Node3D
 var players: Dictionary = {}
 
 
+## Custom game data (belonging to AuthInfo)
+class TankData:
+	# defaults:
+	var hp: int = 10
+	var dmg: int = 1
+	var kills: int = 0
+	var deaths: int = 0
+	var streak: int = 0
+	var max_streak: int = 0
+
+
 func _ready() -> void:
 	if not visible:
 		return
@@ -50,8 +61,10 @@ func spawn_player(uid: int):
 	if players.has(uid) or not net.lobby_info.members.has(uid):
 		return
 
-	var member = net.lobby_info.members[uid]
+	var member: INet.AuthInfo = net.lobby_info.members[uid]
 	var player: Node
+
+	member.game_data = TankData.new()
 
 	if uid == net.me.uid and my_player_prefab != null:
 		player = my_player_prefab.instantiate()

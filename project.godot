@@ -33,9 +33,10 @@ enabled=PackedStringArray("res://addons/godotsteameasy/plugin.cfg")
 [global_group]
 
 net_voice=""
-net_core=""
-net_syncer=""
-net_signal=""
+net_core="The INet node, do not assign any other node to this group!"
+net_syncer="Any NwNode (Signal, Voice, StateSync)"
+net_signal="Nodes that publish their signals through multiplayer"
+net_state="Any node that syncs its properties through multiplayer"
 
 [input]
 

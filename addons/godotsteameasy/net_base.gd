@@ -83,6 +83,9 @@ class AuthInfo:
 	## Round-trip time to the lobby owner in ms (-1 = unknown). Maintained by PingNwNode
 	var ping: int = -1
 
+	# Custom game data
+	var game_data: Variant = {}
+
 
 class LobbyInfo:
 	var lobby_id: int
@@ -93,6 +96,7 @@ class LobbyInfo:
 	# game settings
 	var mode: String
 	var status: String = "lobby"
+	var game_settings: Variant = {}
 
 
 # Built-in network commands, user can extend these (1000-1100 are reserved)
@@ -118,7 +122,8 @@ func uname(uid=true):
 	## Utility function to get lobby member's username
 	if uid == null:
 		return "null"
-	elif uid:
+	elif typeof(uid) == TYPE_BOOL:
+		# uname() / uname(true) means "my username"; any int is a real user id
 		uid = me.uid
 
 	if uid not in lobby_info.members:
@@ -145,6 +150,8 @@ func broadcast(cmd: int, data: Variant, opts = {}) -> bool:
 	var except = []
 	except = opts.get("except", [])
 	opts.erase("except") # backend doesn't need this info:
+	if typeof(except) == TYPE_INT:
+		except = [except]
 
 	for player in lobby_info.members.values():
 		if player.uid == me.uid or except.has(player.uid):
@@ -248,7 +255,7 @@ func register_syncer(syncer: Node):
 
 	if syncer is SignalNwNode:
 		_syncers[NWC_SIGNAL_P].append(syncer)
-	elif syncer is StateSyncNwNodeerNwNode:
+	elif syncer is StateSyncNwNode:
 		_syncers[NWC_STATE_SYNC].append(syncer)
 	elif syncer is VoiceNwNode:
 		_syncers[NWC_VOIP_P].append(syncer)

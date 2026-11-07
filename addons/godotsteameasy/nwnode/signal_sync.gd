@@ -128,7 +128,7 @@ func register_component(component: Node):
 		return
 
 	for sig in script.get_script_signal_list(): # component.get_signal_list
-		if not sig["args"] and len(sig["args"]) == 1:
+		if not is_net_signal(sig):
 			continue
 
 		print("[Signal] registered net event: %s.%s" % [component.name, sig["name"]])
@@ -145,12 +145,25 @@ func unregister_component(component: Node):
 		return
 
 	for sig in script.get_script_signal_list():
-		if not sig["args"] and len(sig["args"]) == 1:
+		if not is_net_signal(sig):
 			continue
 
 		print("[Signal] unregistered net event: %s.%s" % [component.name, sig["name"]])
-		var signal_ = component.get(sig["name"])
-		signal_.disconnect(_send_signal_to_lobby)
+		var signal_: Signal = component.get(sig["name"])
+		# connected with .bind(), so the plain method callable wouldn't match: find the bound one
+		for conn in signal_.get_connections():
+			var cb: Callable = conn["callable"]
+			if cb.get_object() == self and cb.get_method() == &"_send_signal_to_lobby":
+				signal_.disconnect(cb)
+
+## only script signals with exactly one argument can be net signals:
+## either typed as Dictionary, or untyped (e.g. `signal foo(event)`, reported as TYPE_NIL)
+static func is_net_signal(sig: Dictionary) -> bool:
+	var args: Array = sig["args"]
+	if args.size() != 1:
+		return false
+	var t = args[0]["type"]
+	return t == TYPE_DICTIONARY or t == TYPE_NIL
 
 #func is_net_authority(node: Node) -> bool:
 	#return node.get_meta("steam_id") == net.me.uid

@@ -10,8 +10,9 @@
 [ext_resource type="Script" uid="uid://3w6nrec33d1a" path="res://addons/godotsteameasy/nwnode/player_spawner.gd" id="8_4nr88"]
 [ext_resource type="Script" uid="uid://c1bambkgxr4il" path="res://example-project/game_scene/rotate.gd" id="9_0je3w"]
 [ext_resource type="PackedScene" uid="uid://ccencq0lcd3ph" path="res://example-project/chat/multiplayer_chat_ui.tscn" id="10_0je3w"]
-[ext_resource type="Script" uid="uid://bpuii10q7ussc" path="res://example-project/game_scene/stats.gd" id="11_xqq06"]
-[ext_resource type="Script" uid="uid://dd4n15rhsqrjt" path="res://addons/godotsteameasy/ui/steam_avatars.gd" id="12_mtxxn"]
+[ext_resource type="Script" uid="uid://bpuii10q7ussc" path="res://addons/godotsteameasy/ui/client_stats.gd" id="11_xqq06"]
+[ext_resource type="Script" uid="uid://jywl0b6w4wnj" path="res://example-project/game_scene/ui/scoreboard.gd" id="12_score"]
+[ext_resource type="PackedScene" path="res://example-project/game_scene/ui/score_row.tscn" id="13_row"]
 
 [sub_resource type="AudioStreamGenerator" id="AudioStreamGenerator_ate2l"]
 
@@ -37,19 +38,21 @@ text = "(0,0,0)"
 
 [sub_resource type="BoxMesh" id="BoxMesh_ojq4g"]
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_box"]
+
 [node name="Game" type="Node3D" unique_id=1554303070]
 
 [node name="Signals" type="Node" parent="." unique_id=1490627372 groups=["net_syncer"]]
 process_mode = 4
 physics_interpolation_mode = 2
 script = ExtResource("2_hpb1s")
-verbose = true
 
 [node name="Voice" type="Node" parent="." unique_id=681361774 groups=["net_syncer"]]
 process_mode = 3
 physics_interpolation_mode = 2
 auto_translate_mode = 2
 script = ExtResource("3_0je3w")
+enabled = false
 
 [node name="Loopback" type="AudioStreamPlayer3D" parent="Voice" unique_id=1692232651]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.46180427, 0)
@@ -104,9 +107,14 @@ player_prefab = ExtResource("1_tank")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.924973, 0.9884033, 0)
 mesh = SubResource("BoxMesh_ojq4g")
 
+[node name="Hitbox" type="StaticBody3D" parent="A Box" unique_id=1311904579]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="A Box/Hitbox" unique_id=1311904580]
+shape = SubResource("BoxShape3D_box")
+
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=478713877]
 
-[node name="MultiplayerChatUI" parent="CanvasLayer" unique_id=1567560952 instance=ExtResource("10_0je3w")]
+[node name="MultiplayerChatUI" parent="CanvasLayer" unique_id=1567560952 groups=["net_signal"] instance=ExtResource("10_0je3w")]
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
@@ -119,14 +127,33 @@ offset_bottom = 0.0
 grow_horizontal = 0
 grow_vertical = 0
 
-[node name="NetworkStats" type="Label" parent="CanvasLayer" unique_id=1428917041 node_paths=PackedStringArray("ping_component")]
-offset_right = 198.0
-offset_bottom = 58.0
+[node name="NwStats" type="Control" parent="CanvasLayer" unique_id=125437151 node_paths=PackedStringArray("fps_label", "ping_label")]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 241.0
+offset_bottom = 30.0
 script = ExtResource("11_xqq06")
-ping_component = NodePath("../../Ping")
+fps_label = NodePath("FPS")
+ping_label = NodePath("Ping")
 
-[node name="PlayersList" type="VBoxContainer" parent="." unique_id=708112920]
-custom_minimum_size = Vector2(250, 48)
-offset_right = 329.0
-offset_bottom = 326.0
-script = ExtResource("12_mtxxn")
+[node name="Ping" type="Label" parent="CanvasLayer/NwStats" unique_id=2068109877]
+layout_mode = 0
+offset_right = 90.0
+offset_bottom = 28.0
+text = "Ping: "
+
+[node name="FPS" type="Label" parent="CanvasLayer/NwStats" unique_id=1428917041]
+layout_mode = 0
+offset_left = 101.0
+offset_right = 177.0
+offset_bottom = 26.0
+text = "FPS:"
+
+[node name="Scoreboard" type="VBoxContainer" parent="CanvasLayer" unique_id=1903846215]
+offset_left = 8.0
+offset_top = 40.0
+offset_right = 260.0
+offset_bottom = 40.0
+theme_override_constants/separation = 8
+script = ExtResource("12_score")
+row_prefab = ExtResource("13_row")

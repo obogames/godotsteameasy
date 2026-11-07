@@ -1,5 +1,14 @@
 @icon("res://addons/godotsteameasy/gizmo/sync.png")
-class_name StateSyncNwNodeerNwNode extends Node
+class_name StateSyncNwNode extends Node
+## Syncs 2D/3D node state (position, velocity, custom properties...) between peers.
+##
+## - Tracks every node in [member physics_component_group] and identifies it by its scene-relative path.
+## - Sending: every [member sync_interval], the owning peer (node meta "steam_id" == local uid)
+##   broadcasts the changed [PhysicsAttribute]s as an unreliable NWC_STATE_SYNC packet (JSON or binary).
+## - Receiving: packets are stored in a small per-node jitter buffer ordered by packet id. The server
+##   also relays them to the other clients.
+## - Applying: in _physics_process, the newest unapplied snapshot is applied to the node per attribute
+##   (snap, damp, or linear lerp).
 
 @export_group("Component Group")
 @export var enabled: bool = true
@@ -14,6 +23,8 @@ class_name StateSyncNwNodeerNwNode extends Node
 @export var interpolation_value = 0.1
 @export var sync_interval: float = 0.1
 @export var server_fps: int = 30
+## Every N-th tick all attributes are sent, even unchanged ones (0 = only send changes)
+@export var full_sync_every_n_ticks: int = 10
 
 @export_group("Serialization")
 # TODO: custom formats? gzip? etc
@@ -59,7 +70,7 @@ class SlidingBuffer:
 
 class PacketSyncDescriptor:
 	# This keeps an incrementing ID of the packets sent
-	var sent_packet_idx: int = 0
+	var sync_tick: int = 0
 	# This is the largest packet received from the server
 	#var recv_packet_idx: int = 0
 	# This is the latest packet, whose value was applied to the node's property
@@ -67,23 +78,28 @@ class PacketSyncDescriptor:
 	var applied_packet_idx: int = 0
 
 
-	# TODO: ITT: THESE SHOULD BE PER ATTRIBUTE for each synced node!
-	# Last value sent across the network
-	var last_sent_value = null
+	# Last value sent across the network, per attribute name
+	var last_sent_values: Dictionary = {}
 
-	# Last time of receiving
+	# Interpolation state, per attribute name: value at snapshot arrival -> snapshot value
+	var interp_from: Dictionary = {}
+	var interp_to: Dictionary = {}
+	# Seconds elapsed since the last snapshot was applied
+	var interp_elapsed: float = 0.0
+
+	# Last time of receiving (msec)
 	var recv_time = 0
 
-	# This is the average of state snapshot intervals, but by default is set at 200ms
+	# Time between the last two state snapshots (seconds), by default 200ms
 	var lerp_time = 0.2
+	const MIN_LERP_TIME = 0.001
 	const MAX_LERP_TIME = 0.5
-	var snapshot_intervals = SlidingBuffer.new(10)
 
 
 	func snapshot_received():
 		var now = Time.get_ticks_msec()
 		if recv_time > 0:
-			lerp_time = minf(MAX_LERP_TIME, now - recv_time)
+			lerp_time = clampf((now - recv_time) / 1000.0, MIN_LERP_TIME, MAX_LERP_TIME)
 		recv_time = now
 
 
@@ -100,12 +116,15 @@ func _ready() -> void:
 	for node in tree.get_nodes_in_group(physics_component_group):
 		register_component(node)
 
-	net.lobby_event.connect(_on_lobby_event)
-
 	# Resolve NodeType complex rules into PhysicsAttributes
 	if sync_node_type != null:
 		_attributes.append_array(sync_node_type.replace_attribute_representation())
 	_attributes.append_array(sync_attributes)
+
+	# Lobby may have been joined in a previous scene
+	net.lobby_event.connect(_on_lobby_event)
+	if net.lobby_info != null:
+		inited = true
 
 
 func _on_lobby_event(type: int, user: INet.AuthInfo, info: Dictionary):
@@ -129,45 +148,60 @@ func _physics_process(delta: float) -> void:
 	#		cause that's like hacking
 
 	for node_path in _syncables:
+		var node: Node = _syncables[node_path][0]
 		var synced: PacketSyncDescriptor = _syncables[node_path][1]
 		var jitter_buffer: SlidingBuffer = _syncables[node_path][2]
 		# get latest value of jitter buffer:
 		var target_state = jitter_buffer.latest
 
-		if not target_state or synced.applied_packet_idx >= target_state["id"]:
-			# only apply messages that are newer than the most recently applied packet!
-			continue
-		synced.applied_packet_idx = target_state["id"]
+		# only take snapshots that are newer than the most recently applied packet!
+		if target_state and target_state["id"] > synced.applied_packet_idx:
+			synced.applied_packet_idx = target_state["id"]
+			synced.interp_elapsed = 0.0
 
-		var node: Node = _syncables[node_path][0]
+			for attr in _attributes:
+				var attr_name := attr.attribute_name
+				if !target_state.has(attr_name):
+					continue
+
+				if attr.apply_value_type == PhysicsAttribute.ApplyValueType.SNAP:
+					# e.g.: node.linear_velocity = target_linear_velocity
+					node.set(attr_name, target_state[attr_name])
+					synced.interp_to.erase(attr_name)
+				else:
+					# applied gradually below, over the following frames
+					synced.interp_from[attr_name] = node.get(attr_name)
+					synced.interp_to[attr_name] = target_state[attr_name]
+
+		if synced.interp_to.is_empty():
+			continue
+
+		synced.interp_elapsed += delta
+		# 0..1 progress towards the latest snapshot, spread over the measured snapshot interval
+		var weight := clampf(synced.interp_elapsed / synced.lerp_time, 0.0, 1.0)
 
 		for attr in _attributes:
-			if !target_state.has(attr.attribute_name):
+			var attr_name := attr.attribute_name
+			if !synced.interp_to.has(attr_name):
 				continue
+			var from = synced.interp_from[attr_name]
+			var to = synced.interp_to[attr_name]
 
-			# TODO: interpolation type
 			match attr.apply_value_type:
-				PhysicsAttribute.ApplyValueType.SNAP:
-					# e.g.: node.linear_velocity = target_linear_velocity
-					node.set(attr.attribute_name,
-						target_state.get(attr.attribute_name)
-					)
 				PhysicsAttribute.ApplyValueType.DAMP:
-					# e.g.: node.position = lerp(node.position, target_position, 0.1)
-					node.set(attr.attribute_name, 
-						lerp(node.get(attr.attribute_name), target_state.get(attr.attribute_name), attr.damp_value)
-					)
+					# e.g.: node.position = lerp(node.position, target_position, 0.1), every frame
+					node.set(attr_name, lerp(node.get(attr_name), to, attr.damp_value))
 				PhysicsAttribute.ApplyValueType.INTERPOLATE_LINEAR:
-					# e.g.: node.position = lerp(node.position, target_position, 0.1)
-					node.set(attr.attribute_name, 
-						lerp(node.get(attr.attribute_name), target_state.get(attr.attribute_name), attr.damp_value)
-					)
+					node.set(attr_name, lerp(from, to, weight))
 				PhysicsAttribute.ApplyValueType.INTERPOLATE_ANGLE:
-					# TODO: implement interpolation
-					push_error("Unimplemented interpolation!")
+					node.set(attr_name, _interpolate_angle(from, to, weight))
 				PhysicsAttribute.ApplyValueType.INTERPOLATE_SLERP:
-					# TODO: implement interpolation
-					push_error("Unimplemented interpolation!")
+					node.set(attr_name, _interpolate_slerp(from, to, weight))
+
+			# interpolations are done once they reach the snapshot value; damping keeps going
+			if weight >= 1.0 and attr.apply_value_type != PhysicsAttribute.ApplyValueType.DAMP:
+				synced.interp_to.erase(attr_name)
+				synced.interp_from.erase(attr_name)
 
 
 func _on_tick():
@@ -175,48 +209,40 @@ func _on_tick():
 
 	for node_path in _syncables.keys():
 		var node: Node = _syncables[node_path][0]
+		var synced: PacketSyncDescriptor = _syncables[node_path][1]
+
+		# TODO: is this line really needed for StateSync? what do i want to achieve here
 		if !is_net_authority(node):
 			# only send state info for player's owned objects!
 			continue
 
-		var synced: PacketSyncDescriptor = _syncables[node_path][1]
+		synced.sync_tick += 1
 
-		synced.sent_packet_idx += 1
+		# Packets are unreliable, so every N-th tick resend all attributes,
+		# otherwise a single lost packet would leave peers stale until the value changes again
+		var full_sync := full_sync_every_n_ticks > 0 and synced.sync_tick % full_sync_every_n_ticks == 0
 
-		# only include attributes whose value did change
+		var data = {"id": synced.sync_tick, "cm": node_path}
+		var changing_attributes = 0
+		for attr in _attributes:
+			var attr_name := attr.attribute_name
+			var value = node.get(attr_name)
+
+			# only include attributes whose value did change
+			if full_sync or !synced.last_sent_values.has(attr_name) or synced.last_sent_values[attr_name] != value:
+				synced.last_sent_values[attr_name] = value
+				data[attr_name] = _to_repr(value) if serialization == StateSerialization.JSON_FORMAT else value
+				changing_attributes += 1
+
+		if changing_attributes == 0:
+			continue
+
 		if serialization == StateSerialization.JSON_FORMAT:
-			var data = {"id": synced.sent_packet_idx, "cm": node_path}
-	
-			var changing_attributes = 0
-			for attr in _attributes:
-				var value = node.get(attr.attribute_name)
-
-				# TODO: because of this logic, unreliable packet is only sent once. this is not gud
-				if synced.last_sent_value == null or synced.last_sent_value != value:
-					synced.last_sent_value = value
-					data[attr.attribute_name] = _to_repr(value)
-					changing_attributes += 1
-
-			if changing_attributes > 0:
-				net.broadcast_to_peers(INet.NWC_STATE_SYNC, data, {"reliable": false})
+			net.broadcast_to_peers(INet.NWC_STATE_SYNC, data, {"reliable": false})
 		elif serialization == StateSerialization.BINARY_FORMAT:
-			var data = {"id": synced.sent_packet_idx, "cm": node_path}
-	
-			var changing_attributes = 0
-			for attr in _attributes:
-				var value = node.get(attr.attribute_name)
-
-				# TODO: because of this logic, unreliable packet is only sent once. this is not gud
-				if synced.last_sent_value == null or synced.last_sent_value != value:
-					synced.last_sent_value = value
-					data[attr.attribute_name] = value
-					changing_attributes += 1
-
-			if changing_attributes > 0:
-				net.broadcast_to_peers(INet.NWC_STATE_SYNC, data, {"reliable": false, "format": INet.PacketFormat.FORMAT_BINARY})
+			net.broadcast_to_peers(INet.NWC_STATE_SYNC, data, {"reliable": false, "format": INet.PacketFormat.FORMAT_BINARY})
 		else:
 			push_error("Not implemented State Serialization format!")
-
 			#net.broadcast_to_peers(INet.NWC_STATE_SYNC, data, {"reliable": false, "raw": true}) # see _prepare_packet
 
 
@@ -227,29 +253,33 @@ func _on_tick():
 func _on_data_received(from, data):
 	# redistribute to other clients
 	if net.is_server:
-		var opts = {"except": from, "reliable": false, "format": INet.PacketFormat.FORMAT_JSON}
-		if !net.broadcast(INet.NWC_VOIP_P, data, opts):
+		var format = INet.PacketFormat.FORMAT_BINARY if serialization == StateSerialization.BINARY_FORMAT else INet.PacketFormat.FORMAT_JSON
+		var opts = {"except": from, "reliable": false, "format": format}
+		if !net.broadcast(INet.NWC_STATE_SYNC, data, opts):
 			push_error("[StateSyncNwNode] propagate from recv failed (uid: %d) %s" % [from, data])
 			print("###@ DON'T DISS IT LIKE MY PEOPLE WANNA")
 
 	var scene = get_tree().current_scene
-	var node = scene.get_node(data["cm"])
+	var node = scene.get_node_or_null(data["cm"])
 	if not node or !node.is_in_group(physics_component_group):
 		return
 	var node_path = _node_path(node)
+	if !_syncables.has(node_path):
+		return
 
 	var synced: PacketSyncDescriptor = _syncables[node_path][1]
 	var jitter_buffer: SlidingBuffer = _syncables[node_path][2]
 
 	if serialization == StateSerialization.JSON_FORMAT:
 		for attr in data:
+			if attr == "id" or attr == "cm":
+				continue
 			data[attr] = _to_native(data[attr], typeof(node.get(attr)))
-	elif serialization == StateSerialization.BINARY_FORMAT:
-		for attr in data:
-			data[attr] = data[attr]
-	else:
+	elif serialization != StateSerialization.BINARY_FORMAT:
+		# binary format is already deserialized to native types by net_base
 		push_error("Not implemented State Deserialization format!")
 
+	synced.snapshot_received()
 	jitter_buffer.add(data)
 	#sync.recv_packet_idx = data["id"]
 
@@ -274,7 +304,33 @@ func _node_path(node: Node) -> String:
 	return str(node.get_path()).trim_prefix("/root/" + scene_name + "/")
 
 func is_net_authority(node: Node) -> bool:
-	return node.get_meta("steam_id") == net.me.uid
+	return node.get_meta("steam_id", null) == net.me.uid
+
+static func _interpolate_angle(from, to, weight: float):
+	# shortest-path interpolation of angles in radians (e.g. rotation, Node3D.rotation)
+	if from is float:
+		return lerp_angle(from, to, weight)
+	elif from is Vector2:
+		return Vector2(lerp_angle(from.x, to.x, weight), lerp_angle(from.y, to.y, weight))
+	elif from is Vector3:
+		return Vector3(
+			lerp_angle(from.x, to.x, weight),
+			lerp_angle(from.y, to.y, weight),
+			lerp_angle(from.z, to.z, weight)
+		)
+	return lerp(from, to, weight)
+
+static func _interpolate_slerp(from, to, weight: float):
+	# spherical interpolation of rotations / directions
+	if from is Quaternion:
+		return from.slerp(to, weight)
+	elif from is Basis:
+		return from.slerp(to, weight)
+	elif from is Transform2D or from is Transform3D:
+		return from.interpolate_with(to, weight)
+	elif from is Vector2 or from is Vector3:
+		return from.slerp(to, weight)
+	return lerp(from, to, weight)
 
 static func _to_repr(value):
 	if value is Vector2 or value is Vector2i:
@@ -293,7 +349,7 @@ static func _to_repr(value):
 			value.origin.x, value.origin.y
 		]
 	elif value is Transform3D:
-		return _repr_basis(value.basis)
+		return _repr_basis(value.basis) + [value.origin.x, value.origin.y, value.origin.z]
 	elif value is Basis:
 		return _repr_basis(value)
 	return value
@@ -322,8 +378,8 @@ static func _to_native(repr, typ: int):
 			Vector2(repr[4], repr[5])
 		)
 	elif typ == TYPE_TRANSFORM3D:
-		# Serialized as basis only (same as Basis)
-		return Transform3D(_to_native_basis(repr))
+		# Serialized as flattened basis + origin
+		return Transform3D(_to_native_basis(repr), Vector3(repr[9], repr[10], repr[11]))
 	elif typ == TYPE_BASIS:
 		return _to_native_basis(repr)
 

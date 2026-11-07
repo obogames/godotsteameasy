@@ -60,7 +60,7 @@ func _ready() -> void:
 		return
 	net.lobby_event.connect(_on_lobby_event)
 
-	# Lobby may have been joined in a previous scene (e.g. menu -> game scene)
+	# Lobby may have been joined in a previous scene
 	if net.lobby_info != null:
 		_start_pinging()
 

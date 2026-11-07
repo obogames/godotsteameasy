@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dncox8ar56fna"
-path="res://.godot/imported/sync2.png-5d5c88a6e10fd99809bf2d3232136858.ctex"
+uid="uid://cvihksnawqed0"
+path="res://.godot/imported/skull.png-961ce453d7263ba55c87f90e566534e0.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/godotsteameasy/gizmo/sync2.png"
-dest_files=["res://.godot/imported/sync2.png-5d5c88a6e10fd99809bf2d3232136858.ctex"]
+source_file="res://example-project/game_scene/ui/skull.png"
+dest_files=["res://.godot/imported/skull.png-961ce453d7263ba55c87f90e566534e0.ctex"]
 
 [params]
 

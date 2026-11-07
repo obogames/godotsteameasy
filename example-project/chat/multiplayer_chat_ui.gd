@@ -5,6 +5,7 @@ class_name MultiplayerChatUI
 @onready var send: Button = $Panel/MarginContainer/VBoxContainer/HBoxContainer/Send
 @onready var chat: TextEdit = $Panel/MarginContainer/VBoxContainer/Chat
 
+## Net signal (relayed by SignalNwNode, this node is in the "net_signal" group)
 signal message_sent(evt: Dictionary)
 
 
@@ -15,16 +16,24 @@ func _ready():
 	#hide()
 
 	set_process_input(true)
-	
+
+	# fires both for our own messages (local emit) and for remote ones (emitted by SignalNwNode)
 	message_sent.connect(_on_recv_message)
 
 func _input(event):
+	# clicking anywhere outside the chat panel (e.g. on the game world) leaves the chat,
+	# so the keyboard goes back to controlling the tank
+	if event is InputEventMouseButton and event.pressed and message.has_focus():
+		if not $Panel.get_global_rect().has_point(event.position):
+			message.release_focus()
+		return
+
+	# while typing, Enter is handled by the LineEdit (text_submitted), don't toggle the chat here,
+	# otherwise the event gets consumed and the message is never submitted
+	if visible and message.has_focus():
+		return
 	if event.is_action_pressed("enter"):
 		toggle_chat()
-	elif visible and message.has_focus():
-		if event is InputEventKey and event.keycode == KEY_ENTER and event.pressed:
-			_on_send_pressed()
-			get_viewport().set_input_as_handled()
 
 
 func toggle_chat():
@@ -38,23 +47,22 @@ func toggle_chat():
 		get_viewport().set_input_as_handled()
 
 func _on_text_submitted(text: String):
-	if text == "":
+	if text.strip_edges().is_empty():
 		hide()
+		message.release_focus()
 		return
-
-	message_sent.emit({
-		"text": text
-	})
-
-	message.text = ""
-	message.grab_focus()
+	_send_message(text)
 
 func _on_send_pressed():
-	var text = message.text.strip_edges()
+	_send_message(message.text)
+
+func _send_message(text: String):
+	text = text.strip_edges()
 	if text.is_empty():
 		return
 
 	message_sent.emit({
+		"_to": "broadcast",
 		"text": text
 	})
 
@@ -62,8 +70,8 @@ func _on_send_pressed():
 	message.grab_focus()
 
 func _on_recv_message(evt: Dictionary):
-	print("@@@ Chat ", evt)
-	var username: String = "username"
+	# "_frm" is only present on events received from the network; locally emitted ones are ours
+	var username: String = Globals.net.uname(evt.get("_frm", true))
 	var time = Time.get_time_string_from_system()
 	chat.text += "[%s] %s: %s\n" % [time, username, evt["text"]]
 	chat.scroll_vertical = chat.get_line_count()

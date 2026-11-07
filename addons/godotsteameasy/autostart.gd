@@ -54,7 +54,7 @@ func _on_lobby_match_list(lobbies: Array):
 
 
 func _on_lobby_event(type: int, user: INet.AuthInfo, info: Dictionary):
-	print("LOBBY EVENT ", type, user.uid)
+	#print("LOBBY EVENT ", type, user.uid)
 	var tree = get_tree()
 
 	if type == INet.EVENT_CREATE:

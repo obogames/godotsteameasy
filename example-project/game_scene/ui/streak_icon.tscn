@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://bobcnngjy5hyw"]
+
+[ext_resource type="Texture2D" uid="uid://cvihksnawqed0" path="res://example-project/game_scene/ui/skull.png" id="1_5wuki"]
+
+[node name="StreakIcon" type="TextureRect" unique_id=1689570019]
+custom_minimum_size = Vector2(20, 20)
+texture = ExtResource("1_5wuki")
+expand_mode = 1
+stretch_mode = 5
