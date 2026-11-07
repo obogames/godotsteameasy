@@ -13,6 +13,7 @@
 [ext_resource type="Script" uid="uid://bpuii10q7ussc" path="res://addons/godotsteameasy/ui/client_stats.gd" id="11_xqq06"]
 [ext_resource type="Script" uid="uid://jywl0b6w4wnj" path="res://example-project/game_scene/ui/scoreboard.gd" id="12_score"]
 [ext_resource type="PackedScene" path="res://example-project/game_scene/ui/score_row.tscn" id="13_row"]
+[ext_resource type="Script" path="res://addons/godotsteameasy/nwnode/voice_speaker.gd" id="14_vspk"]
 
 [sub_resource type="AudioStreamGenerator" id="AudioStreamGenerator_ate2l"]
 
@@ -52,11 +53,11 @@ process_mode = 3
 physics_interpolation_mode = 2
 auto_translate_mode = 2
 script = ExtResource("3_0je3w")
-enabled = false
 
 [node name="Loopback" type="AudioStreamPlayer3D" parent="Voice" unique_id=1692232651]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.46180427, 0)
 stream = SubResource("AudioStreamGenerator_ate2l")
+script = ExtResource("14_vspk")
 
 [node name="StateSyncerSimple" type="Node" parent="." unique_id=1441387060 groups=["net_syncer"]]
 process_mode = 3

@@ -73,7 +73,9 @@ func _ready():
 			var voice_sync = syncers[0]
 			voice_sync.my_speaker = voice_sync._node_path($voice)
 			print("[Player] %s set voice authority" % self.name)
-			$voice.queue_free()
+
+			# $voice is kept (not freed): our own voice is never played back on it,
+			# but it drives our own voice_icon (VoiceSpeaker -> toggle_ui)
 
 
 func _process(delta):
@@ -100,10 +102,13 @@ func set_data(info: INet.AuthInfo):
 ## State sync on other physics bodyparts:
 func set_children_data(info: INet.AuthInfo):
 	# turret's rotation is also broadcasted to other players
-	turret.set_meta("steam_id", info.uid)
-	#barrel.set_meta("steam_id", info.uid)
+	turret.set_data(info)
 
-func toggle_voice(is_on: bool):
+	if has_node("voice"):
+		$voice.set_data(info)
+
+## Called by the $voice VoiceSpeaker when this player starts / stops talking
+func toggle_ui(is_on: bool):
 	$voice_icon.visible = is_on
 
 

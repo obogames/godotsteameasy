@@ -16,7 +16,7 @@ class_name VoiceNwNode extends Node
 @export var voice_key : String = "push_to_talk"
 
 @export_group("Playback")
-## If enabled, sound played back to the client instead of networking
+## (local debugging) If enabled, sound played back to the client instead of networking
 @export var loopback_enabled : bool = false
 ## If enabled, it uses Steam's recommended PCM rate
 @export var use_optimal_sample_rate: bool = false
@@ -28,7 +28,8 @@ var sample_rate: int = DEFAULT_SAMPLE_RATE
 
 @onready var net: INet = get_tree().get_first_node_in_group("net_core")
 
-var _node_cache: Dictionary[String, Dictionary] = {}
+## Registered speakers, keyed by node path relative to the current scene ("//loopback" for the loopback)
+var _node_cache: Dictionary[String, Node] = {}
 
 
 func _ready() -> void:
@@ -59,16 +60,11 @@ func _ready() -> void:
 			$Loopback.queue_free()
 	else:
 		# Debug voice through looping the voice back to the speaker
-		if not has_node("Loopback"):
-			push_error("[VoiceNwNode] loopback voice was enabled, but VoiceNwNode node `%s` lacks a `LocalVoice` child!")
-
-		$Loopback.stream.mix_rate = sample_rate
-		$Loopback.play()
-		_node_cache["//loopback"] = {
-			"node": $Loopback,
-			"playback": $Loopback.get_stream_playback(),
-			"original_pitch": $Loopback.pitch_scale
-		}
+		var loopback = get_node_or_null("Loopback")
+		if not loopback is VoiceSpeaker:
+			push_error("[VoiceNwNode] loopback voice was enabled, but VoiceNwNode node `%s` lacks a `Loopback` child with a VoiceSpeaker script!" % name)
+		elif loopback.setup_playback(sample_rate):
+			_node_cache["//loopback"] = loopback
 
 
 func _process(dt):
@@ -78,11 +74,15 @@ func _process(dt):
 
 	# check for voice
 	var voice_data: Dictionary = Steam.getVoice()
-	if voice_data['result'] == Steam.VOICE_RESULT_OK and voice_data['written']:
-		var audio_node = _node_cache[str(my_speaker)]
-		if my_speaker == null:
+	if voice_data['result'] == Steam.VOICE_RESULT_OK:# and voice_data['written']:
+		var speaker = _node_cache.get(str(my_speaker))
+		if my_speaker.is_empty() or not is_instance_valid(speaker):
 			print("[VoiceNwNode] Voice message has data: %s / %s, but Syncer found no node with multiplayer authority! Set the `steam_id` meta for an AudioStreamPlayer node which belongs to a player object!" % [voice_data['result'], voice_data['written']])
 			return
+
+		# own voice never comes back from the network: tell our own speaker directly.
+		# the buffer is still compressed here, so the level is unknown (1.0)
+		speaker._on_voice_packet(1.0)
 
 		# If loopback is enable, play it back at this point
 		if !loopback_enabled:
@@ -114,29 +114,40 @@ func process_voice(buffer: PackedByteArray, node_path: String):
 	else:
 		sample_rate = DEFAULT_SAMPLE_RATE
 
-	var dat = _node_cache.get(node_path)
-	var audio_node = dat["node"]
-	var playback: AudioStreamGeneratorPlayback = dat["playback"]
+	var speaker = _node_cache.get(node_path)
+	if not is_instance_valid(speaker):
+		if verbose:
+			print("[VoiceNwNode] voice packet for unknown speaker: %s" % node_path)
+		return
 
-	var pitch : float = (float(sample_rate)/DEFAULT_SAMPLE_RATE) * dat["original_pitch"]
-	audio_node.set_pitch_scale(pitch)
+	speaker.apply_sample_rate(sample_rate, DEFAULT_SAMPLE_RATE)
 
 	var decompressed_voice: Dictionary = Steam.decompressVoice(buffer, sample_rate)
 	if (not decompressed_voice['result'] == Steam.VOICE_RESULT_OK):
 		return
-	elif playback.get_frames_available() <= 0:
-		return
 
 	var local_voice_buffer = decompressed_voice['uncompressed']
 	local_voice_buffer.resize(decompressed_voice['size'])
-	
-	for i: int in range(0, mini(playback.get_frames_available() * 2, local_voice_buffer.size()), 2):
+
+	# push as many frames as fit, but measure the loudness over the whole packet:
+	# a full playback buffer must not make the speaker look silent
+	var playback: AudioStreamGeneratorPlayback = speaker.playback
+	var frames_free: int = playback.get_frames_available()
+	var sum_sq := 0.0
+	var n := 0
+	for i: int in range(0, local_voice_buffer.size() - 1, 2):
 		# Steam's audio data is represented as 16-bit single channel PCM audio, so we need to convert it to amplitudes
 		# Combine the low and high bits to get full 16-bit value
 		var raw_value = local_voice_buffer.decode_s16(i)
 		# Convert the 16-bit integer to a float on from -1 to 1
 		var amplitude: float = float(raw_value) / 32768.0
-		playback.push_frame(Vector2(amplitude, amplitude))
+		if n < frames_free:
+			playback.push_frame(Vector2(amplitude, amplitude))
+		sum_sq += amplitude * amplitude
+		n += 1
+
+	# voice activity: the speaker decides when talking starts / stops and updates its UI
+	speaker._on_voice_packet(sqrt(sum_sq / n) if n > 0 else 0.0)
 
 
 func _prepare_packet(dat, buffer: StreamPeerBuffer):
@@ -149,8 +160,7 @@ func _on_data_received(from: int, buffer: StreamPeerBuffer):
 	if net.is_server:
 		var opts = {"except": from, "reliable": false, "format": INet.PacketFormat.FORMAT_RAW}
 		if !net.broadcast(INet.NWC_VOIP_P, buffer.data_array, opts):
-			push_error("[Voice] propagate from recv failed (uid: %d) %s" % [from, buffer.get_size()])
-			print("###@ DON'T DISS IT LIKE MY PEOPLE WANNA")
+			push_error("[Voice] propagate from recv failed (uid: %d) %s \n###@" % [from, buffer.get_size()])
 
 	# deserialize packet
 	var voip_sig = str_to_var(buffer.get_string())
@@ -163,12 +173,12 @@ func _on_data_received(from: int, buffer: StreamPeerBuffer):
 func register_voice_node(audio_node: Node):
 	if !audio_node.is_in_group(voice_component_group):
 		return
-	elif not (audio_node is AudioStreamPlayer3D or audio_node is AudioStreamPlayer2D or audio_node is AudioStreamPlayer):
-		push_error("[VoiceNwNode] audio_node of group: `%s` must be of either type: AudioStreamPlayer/3D/2D!" % voice_component_group)
+	elif not audio_node is VoiceSpeaker:
+		push_error("[VoiceNwNode] node %s in group `%s` needs the VoiceSpeaker script (on an AudioStreamPlayer/2D/3D)!" % [audio_node.get_path(), voice_component_group])
 		return
 	# setup playback
-	audio_node.stream.mix_rate = sample_rate
-	audio_node.play()
+	if not audio_node.setup_playback(sample_rate):
+		return
 
 	var _path = _node_path(audio_node)
 	print("[VoiceNwNode] registered %s node: %s (pitch: %s, sample rate: %s)" % [audio_node.get_class(), _path, audio_node.pitch_scale, sample_rate])
@@ -178,22 +188,23 @@ func register_voice_node(audio_node: Node):
 		print("[VoiceNwNode] registered multiplayer authority (steam id: %s) %s." % [audio_node.get_meta("steam_id"), _path])
 		my_speaker = _path
 
-	_node_cache[_path] = {
-		"node": audio_node,
-		"playback": audio_node.get_stream_playback(),
-		"original_pitch": audio_node.pitch_scale,
-	}
+	_node_cache[_path] = audio_node
 
 func unregister_voice_node(audio_node: Node):
 	if !audio_node.is_in_group(voice_component_group):
 		return
 
-	#audio_node.stop()
-	#_node_cache.erase(_node_path(audio_node))
+	# only erase if this exact node is cached there (a new node may have taken over the same path)
+	var _path = _node_path(audio_node)
+	if _node_cache.get(_path) == audio_node:
+		_node_cache.erase(_path)
 
 func _node_path(node: Node) -> String:
-	var scene_name = get_tree().current_scene.name
-	return str(node.get_path()).trim_prefix("/root/" + scene_name + "/")
+	var scene = get_tree().current_scene
+	if scene == null:
+		# during a scene change
+		return str(node.get_path())
+	return str(node.get_path()).trim_prefix("/root/" + scene.name + "/")
 
 func is_net_authority(node: Node) -> bool:
 	if !node.has_meta("steam_id"):
